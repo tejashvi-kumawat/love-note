@@ -116,38 +116,61 @@ class NotificationService {
         return false
       }
 
-      // Try Service Worker first (for PWA)
-      if ('serviceWorker' in navigator) {
+      // Try Service Worker first (for PWA) - but with timeout
+      let useServiceWorker = false
+      if ('serviceWorker' in navigator && 'showNotification' in ServiceWorkerRegistration.prototype) {
         try {
-          const registration = await navigator.serviceWorker.ready.catch(() => null)
-          if (registration && registration.showNotification) {
-            console.log('Attempting Service Worker notification...')
+          console.log('Checking for Service Worker...')
+          // Use Promise.race to timeout after 1 second
+          const swCheck = Promise.race([
+            navigator.serviceWorker.ready,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('SW timeout')), 1000))
+          ])
+          
+          const registration = await swCheck
+          if (registration && typeof registration.showNotification === 'function') {
+            console.log('Service Worker found, attempting notification...')
             await registration.showNotification(title, defaultOptions)
             console.log('✅ Notification sent via Service Worker')
             return true
+          } else {
+            console.log('Service Worker found but showNotification not available')
           }
         } catch (swError) {
-          console.log('Service Worker notification failed, using fallback:', swError)
+          console.log('Service Worker check failed or timed out, using Notification API:', swError.message || swError)
         }
+      } else {
+        console.log('Service Worker not available, using Notification API directly')
       }
 
       // Fallback to regular Notification API (works in Safari, Chrome, etc.)
-      console.log('Attempting Notification API...')
-      const notification = new Notification(title, defaultOptions)
-      console.log('✅ Notification sent via Notification API')
-      
-      // Auto-close after 5 seconds
-      setTimeout(() => {
-        notification.close()
-      }, 5000)
+      console.log('Using Notification API fallback...')
+      try {
+        const notification = new Notification(title, defaultOptions)
+        console.log('✅ Notification created successfully via Notification API')
+        
+        // Auto-close after 5 seconds
+        setTimeout(() => {
+          notification.close()
+        }, 5000)
 
-      // Handle click event
-      notification.onclick = () => {
-        window.focus()
-        notification.close()
+        // Handle click event
+        notification.onclick = () => {
+          console.log('Notification clicked')
+          window.focus()
+          notification.close()
+        }
+
+        // Handle error
+        notification.onerror = (error) => {
+          console.error('Notification error:', error)
+        }
+
+        return true
+      } catch (notifError) {
+        console.error('❌ Failed to create notification:', notifError)
+        throw notifError
       }
-
-      return true
     } catch (error) {
       console.error('❌ Error sending notification:', error)
       return false
