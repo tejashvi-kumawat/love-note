@@ -25,6 +25,9 @@ def _get_vapid_object():
     Create Vapid object from VAPID keys for pywebpush
     pywebpush can accept Vapid object directly
     """
+    if not VAPID_AVAILABLE or Vapid is None:
+        raise ImportError('py-vapid not available. Install it with: pip install py-vapid')
+    
     try:
         # py-vapid can create Vapid object from base64url strings
         # It expects the keys in the format we have
