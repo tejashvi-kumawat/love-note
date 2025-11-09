@@ -340,21 +340,7 @@ const RichTextEditor = ({
     editorRef.current.focus()
     setContent(editorRef.current.innerHTML)
     
-    // Clean up zero-width spaces after typing
-    setTimeout(() => {
-      if (editorRef.current) {
-        const zeroWidthSpaces = editorRef.current.querySelectorAll('span:has-text("\u200B")')
-        zeroWidthSpaces.forEach(span => {
-          if (span.textContent === '\u200B' && span.children.length === 0) {
-            const parent = span.parentNode
-            if (parent) {
-              parent.removeChild(span)
-              parent.normalize()
-            }
-          }
-        })
-      }
-    }, 100)
+    // Note: Zero-width space will be cleaned up in handleInput when user types
   }
 
   const changeLineHeight = (lineHeight) => {
