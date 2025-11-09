@@ -171,6 +171,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-height: 450px; /* Limit to show 2-3 note cards */
 }
 
 .notes-list::-webkit-scrollbar {
