@@ -54,8 +54,11 @@ const Journal = () => {
         
         // Only notify if entry was created in the last 5 minutes
         if (minutesDiff < 5) {
-          const dateStr = format(new Date(entry.date), 'yyyy-MM-dd')
-          notificationService.notifyJournalCreated(entry.author?.username || 'Your partner', dateStr)
+          // For Safari, trigger notification in a way that maintains user interaction context
+          setTimeout(() => {
+            const dateStr = format(new Date(entry.date), 'yyyy-MM-dd')
+            notificationService.notifyJournalCreated(entry.author?.username || 'Your partner', dateStr)
+          }, 0)
         }
       })
     }

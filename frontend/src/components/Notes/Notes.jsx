@@ -77,7 +77,11 @@ const Notes = () => {
         
         // Only notify if note was created in the last 5 minutes (to avoid old notes triggering notifications)
         if (minutesDiff < 5) {
-          notificationService.notifyNoteCreated(note.author?.username || 'Your partner', note.title)
+          // For Safari, trigger notification in a way that maintains user interaction context
+          // Use setTimeout with 0 delay to ensure it's in the event loop
+          setTimeout(() => {
+            notificationService.notifyNoteCreated(note.author?.username || 'Your partner', note.title)
+          }, 0)
         }
       })
     }

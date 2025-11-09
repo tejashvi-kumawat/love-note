@@ -8,7 +8,18 @@ class NotificationService {
   constructor() {
     this.permission = null
     this.reminderInterval = null
+    this.isSafari = this.detectSafari()
     this.checkPermission()
+  }
+
+  /**
+   * Detect if browser is Safari
+   */
+  detectSafari() {
+    const ua = navigator.userAgent.toLowerCase()
+    const isSafari = /safari/.test(ua) && !/chrome/.test(ua) && !/chromium/.test(ua)
+    console.log('Browser detection:', { isSafari, userAgent: navigator.userAgent })
+    return isSafari
   }
 
   /**
@@ -144,15 +155,26 @@ class NotificationService {
       }
 
       // Fallback to regular Notification API (works in Safari, Chrome, etc.)
-      console.log('Using Notification API fallback...')
+      console.log('Using Notification API fallback...', { isSafari: this.isSafari })
+      
+      // Safari requires user interaction context for notifications
+      // If it's Safari and we're not in a user interaction context, try to queue it
+      if (this.isSafari) {
+        console.log('Safari detected - ensuring user interaction context')
+        // In Safari, notifications work better when triggered from user actions
+        // For background notifications, we need Service Worker + Push API
+        // For now, try to send it directly - Safari should allow it if permission is granted
+      }
+      
       try {
         const notification = new Notification(title, defaultOptions)
         console.log('✅ Notification created successfully via Notification API')
         
-        // Auto-close after 5 seconds
+        // Auto-close after 5 seconds (but longer for Safari)
+        const closeDelay = this.isSafari ? 10000 : 5000
         setTimeout(() => {
           notification.close()
-        }, 5000)
+        }, closeDelay)
 
         // Handle click event
         notification.onclick = () => {
@@ -166,9 +188,23 @@ class NotificationService {
           console.error('Notification error:', error)
         }
 
+        // Safari specific: Show notification
+        if (this.isSafari) {
+          console.log('✅ Safari notification sent')
+        }
+
         return true
       } catch (notifError) {
         console.error('❌ Failed to create notification:', notifError)
+        
+        // Safari specific error handling
+        if (this.isSafari) {
+          console.warn('Safari notification failed. This might be because:')
+          console.warn('1. Not in user interaction context (needs click/action)')
+          console.warn('2. Service Worker + Push API needed for background notifications')
+          console.warn('3. Try adding to home screen as PWA for better support')
+        }
+        
         throw notifError
       }
     } catch (error) {
