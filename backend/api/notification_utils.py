@@ -11,13 +11,18 @@ logger = logging.getLogger(__name__)
 
 try:
     from pywebpush import webpush, WebPushException
-    from cryptography.hazmat.primitives.asymmetric import ec
-    from cryptography.hazmat.primitives import serialization
-    from cryptography.hazmat.backends import default_backend
     WEBPUSH_AVAILABLE = True
 except ImportError:
     WEBPUSH_AVAILABLE = False
     logger.warning('pywebpush not installed. Web Push notifications will not work.')
+
+try:
+    from py_vapid import Vapid
+    VAPID_AVAILABLE = True
+except ImportError:
+    VAPID_AVAILABLE = False
+    Vapid = None
+    logger.warning('py-vapid not installed. VAPID key handling may not work correctly.')
 
 
 def _get_vapid_object():
