@@ -524,6 +524,9 @@ def get_vapid_public_key(request):
 @permission_classes([IsAuthenticated])
 def save_push_subscription(request):
     """Save Web Push subscription for the user"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
         endpoint = request.data.get('endpoint')
         keys = request.data.get('keys', {})
@@ -531,6 +534,7 @@ def save_push_subscription(request):
         auth = keys.get('auth')
         
         if not endpoint or not p256dh or not auth:
+            logger.warning(f'Missing subscription data for user {request.user.username}')
             return Response({'error': 'Missing subscription data'}, status=status.HTTP_400_BAD_REQUEST)
         
         subscription, created = PushSubscription.objects.update_or_create(
@@ -542,12 +546,16 @@ def save_push_subscription(request):
             }
         )
         
+        logger.info(f'Push subscription {"created" if created else "updated"} for user {request.user.username}: {endpoint[:50]}...')
+        
         return Response({
             'message': 'Subscription saved successfully',
-            'id': subscription.id
+            'id': subscription.id,
+            'created': created
         }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
         
     except Exception as e:
+        logger.error(f'Error saving push subscription for user {request.user.username}: {e}', exc_info=True)
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 

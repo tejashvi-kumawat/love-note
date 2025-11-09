@@ -366,9 +366,12 @@ class NotificationService {
       })
 
       if (!subscribeResponse.ok) {
+        const errorText = await subscribeResponse.text()
+        // Log error for debugging (but don't expose to user)
         return null
       }
 
+      const result = await subscribeResponse.json()
       return subscription
     } catch (error) {
       return null
