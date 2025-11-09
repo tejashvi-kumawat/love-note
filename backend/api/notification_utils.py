@@ -205,7 +205,10 @@ def send_notification_to_partner(user, notification_type, title, body, note_id=N
             'journal_deletion_requested': partner_profile.notify_journal_deletion_requested,
         }.get(notification_type, True)
         
+        logger.info(f'Notification check for {target_user.username}: type={notification_type}, enabled={notification_enabled}, notify_note_liked={partner_profile.notify_note_liked}')
+        
         if not notification_enabled:
+            logger.info(f'Notification type {notification_type} disabled for {target_user.username}, skipping')
             return
         
         # Get target user's push subscriptions

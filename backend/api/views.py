@@ -295,12 +295,13 @@ def toggle_note_like(request, note_id):
             # Like - send notification to partner (same as note creation)
             # Only send if user has a partner and didn't like their own note
             # Notification should go to user.partner (partner of the person who liked)
+            import logging
+            logger = logging.getLogger(__name__)
+            
+            logger.info(f'Like action: User {user.username} (partner: {user.partner.username if user.partner else "None"}) liked note by {note.author.username}')
+            
             if user.partner and note.author != user:
-                # Log for debugging
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.info(f'User {user.username} liked note by {note.author.username}, sending notification to {user.partner.username}')
-                
+                logger.info(f'Sending like notification: {user.username} -> {user.partner.username}')
                 send_notification_to_partner(
                     user,  # Trigger user (who liked) - notification goes to user.partner
                     'note_liked',
@@ -308,6 +309,12 @@ def toggle_note_like(request, note_id):
                     f'"{note.title}"',
                     note_id=note.id
                 )
+            else:
+                if not user.partner:
+                    logger.warning(f'User {user.username} has no partner, skipping notification')
+                if note.author == user:
+                    logger.info(f'User {user.username} liked their own note, skipping notification')
+            
             return Response({'message': 'Note liked', 'is_liked': True})
             
     except Note.DoesNotExist:
