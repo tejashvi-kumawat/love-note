@@ -74,9 +74,6 @@ def send_push_notification(subscription, title, body, data=None):
             "sub": settings.VAPID_CLAIM_EMAIL
         }
         
-        # Create Vapid object from keys
-        vapid = _get_vapid_object()
-        
         # Create notification payload
         # For Safari/Chrome compatibility, we send the payload as JSON string
         payload = {
@@ -92,11 +89,12 @@ def send_push_notification(subscription, title, body, data=None):
             payload["data"] = data
         
         # Send push notification
-        # pywebpush can accept Vapid object or private key string
+        # Try passing private key as string first (base64url format)
+        # pywebpush should handle base64url format directly
         webpush(
             subscription_info=subscription_info,
             data=json.dumps(payload),
-            vapid_private_key=vapid,
+            vapid_private_key=settings.VAPID_PRIVATE_KEY,
             vapid_claims=vapid_claims,
             ttl=86400  # 24 hours TTL for push notifications
         )
