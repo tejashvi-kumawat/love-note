@@ -320,6 +320,15 @@
   gap: 6px;
   font-size: 0.9rem;
   font-weight: 600;
+  min-width: 40px;
+  min-height: 36px;
+}
+
+.viewer-like-btn svg {
+  width: 16px;
+  height: 16px;
+  color: #e91e63;
+  flex-shrink: 0;
 }
 
 .viewer-like-btn:hover {
