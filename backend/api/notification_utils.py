@@ -211,6 +211,9 @@ def send_notification_to_partner(user, notification_type, title, body, note_id=N
         # Get target user's push subscriptions
         subscriptions = PushSubscription.objects.filter(user=target_user)
         
+        # Log for debugging
+        logger.info(f'Sending notification "{title}" to {target_user.username} (triggered by {user.username}), found {subscriptions.count()} subscriptions')
+        
         # Send push notification to all subscriptions if they exist
         if subscriptions.exists():
             data = {}

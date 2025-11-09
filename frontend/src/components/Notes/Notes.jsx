@@ -59,38 +59,14 @@ const Notes = () => {
     }
   }, [searchQuery, searchType])
 
-  // Check for new notes and send notifications
+  // Backend handles all notifications - no need for frontend polling
+  // Keep lastNoteIds for other purposes if needed
   useEffect(() => {
-    if (notes.length > 0 && lastNoteIds.size > 0) {
-      // Find new notes (notes that weren't in lastNoteIds)
-      const newNotes = notes.filter(note => 
-        !lastNoteIds.has(note.id) && 
-        note.author?.id !== user?.id && // Only notify for partner's notes
-        user?.partner
-      )
-      
-      newNotes.forEach(note => {
-        // Check if it's a newly created note (recently created)
-        const noteDate = new Date(note.created_at)
-        const now = new Date()
-        const minutesDiff = (now - noteDate) / (1000 * 60)
-        
-        // Only notify if note was created in the last 5 minutes (to avoid old notes triggering notifications)
-        if (minutesDiff < 5) {
-          // For Safari, trigger notification in a way that maintains user interaction context
-          // Use setTimeout with 0 delay to ensure it's in the event loop
-          setTimeout(() => {
-            notificationService.notifyNoteCreated(note.author?.username || 'Your partner', note.title)
-          }, 0)
-        }
-      })
-    }
-    
     // Update lastNoteIds
     if (notes.length > 0) {
       setLastNoteIds(new Set(notes.map(n => n.id)))
     }
-  }, [notes, user])
+  }, [notes])
 
   const handleCreateNote = () => {
     const newNote = {
