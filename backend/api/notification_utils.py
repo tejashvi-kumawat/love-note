@@ -20,41 +20,21 @@ except ImportError:
     logger.warning('pywebpush not installed. Web Push notifications will not work.')
 
 
-def _convert_vapid_private_key(base64url_key):
+def _get_vapid_object():
     """
-    Convert VAPID private key from base64url string to PEM format
-    that pywebpush can use
+    Create Vapid object from VAPID keys for pywebpush
+    pywebpush can accept Vapid object directly
     """
     try:
-        # Add padding if needed
-        padding_length = (4 - len(base64url_key) % 4) % 4
-        padding = '=' * padding_length
-        base64_key = (base64url_key + padding).replace('-', '+').replace('_', '/')
-        
-        # Decode base64 to get raw 32-byte private key
-        private_key_bytes = base64.b64decode(base64_key)
-        
-        # Convert to integer (private scalar)
-        private_key_int = int.from_bytes(private_key_bytes, 'big')
-        
-        # Create EC private key using SECP256R1 curve
-        curve = ec.SECP256R1()
-        backend = default_backend()
-        
-        # Create private key using derive_private_key
-        # This is the correct way to create a private key from raw integer
-        private_key = ec.derive_private_key(private_key_int, curve, backend)
-        
-        # Serialize to PEM format (what pywebpush expects)
-        pem_key = private_key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption()
+        # py-vapid can create Vapid object from base64url strings
+        # It expects the keys in the format we have
+        vapid = Vapid.from_string(
+            private_key=settings.VAPID_PRIVATE_KEY,
+            public_key=settings.VAPID_PUBLIC_KEY
         )
-        
-        return pem_key.decode('utf-8')
+        return vapid
     except Exception as e:
-        logger.error(f'Error converting VAPID private key: {e}', exc_info=True)
+        logger.error(f'Error creating Vapid object: {e}', exc_info=True)
         raise
 
 
@@ -89,8 +69,8 @@ def send_push_notification(subscription, title, body, data=None):
             "sub": settings.VAPID_CLAIM_EMAIL
         }
         
-        # Convert VAPID private key from base64url to PEM format
-        vapid_private_key_pem = _convert_vapid_private_key(settings.VAPID_PRIVATE_KEY)
+        # Create Vapid object from keys
+        vapid = _get_vapid_object()
         
         # Create notification payload
         # For Safari/Chrome compatibility, we send the payload as JSON string
@@ -107,10 +87,11 @@ def send_push_notification(subscription, title, body, data=None):
             payload["data"] = data
         
         # Send push notification
+        # pywebpush can accept Vapid object or private key string
         webpush(
             subscription_info=subscription_info,
             data=json.dumps(payload),
-            vapid_private_key=vapid_private_key_pem,
+            vapid_private_key=vapid,
             vapid_claims=vapid_claims,
             ttl=86400  # 24 hours TTL for push notifications
         )
