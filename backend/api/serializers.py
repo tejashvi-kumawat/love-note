@@ -60,7 +60,7 @@ class NoteSerializer(serializers.ModelSerializer):
     deletion_approved_by = UserSerializer(read_only=True)
     edit_requested_by = UserSerializer(read_only=True)
     edit_approved_by = UserSerializer(read_only=True)
-    likes = NoteLikeSerializer(many=True, read_only=True)
+    likes = serializers.SerializerMethodField()
     like_count = serializers.SerializerMethodField()
     is_liked_by_current_user = serializers.SerializerMethodField()
     
@@ -71,13 +71,29 @@ class NoteSerializer(serializers.ModelSerializer):
                   'pending_title', 'pending_content', 'likes', 'like_count', 'is_liked_by_current_user')
         read_only_fields = ('author', 'created_at', 'updated_at')
     
+    def get_likes(self, obj):
+        try:
+            likes = obj.likes.all()
+            return NoteLikeSerializer(likes, many=True).data
+        except Exception:
+            # Handle case where NoteLike table doesn't exist yet (migration not run)
+            return []
+    
     def get_like_count(self, obj):
-        return obj.likes.count()
+        try:
+            return obj.likes.count()
+        except Exception:
+            # Handle case where NoteLike table doesn't exist yet (migration not run)
+            return 0
     
     def get_is_liked_by_current_user(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return obj.likes.filter(user=request.user).exists()
+        try:
+            request = self.context.get('request')
+            if request and request.user.is_authenticated:
+                return obj.likes.filter(user=request.user).exists()
+        except Exception:
+            # Handle case where NoteLike table doesn't exist yet (migration not run)
+            pass
         return False
 
 
