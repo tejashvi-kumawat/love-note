@@ -5,15 +5,52 @@ from django.conf import settings
 from .models import PushSubscription, UserProfile
 import json
 import logging
+import base64
 
 logger = logging.getLogger(__name__)
 
 try:
     from pywebpush import webpush, WebPushException
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from cryptography.hazmat.primitives import serialization
     WEBPUSH_AVAILABLE = True
 except ImportError:
     WEBPUSH_AVAILABLE = False
     logger.warning('pywebpush not installed. Web Push notifications will not work.')
+
+
+def _convert_vapid_private_key(base64url_key):
+    """
+    Convert VAPID private key from base64url string to cryptography object
+    that pywebpush can use
+    """
+    try:
+        # Add padding if needed
+        padding = '=' * (4 - len(base64url_key) % 4) % 4
+        base64_key = (base64url_key + padding).replace('-', '+').replace('_', '/')
+        
+        # Decode base64 to get raw 32-byte private key
+        private_key_bytes = base64.b64decode(base64_key)
+        
+        # Convert to integer
+        private_key_int = int.from_bytes(private_key_bytes, 'big')
+        
+        # Create EC private key from private numbers
+        curve = ec.SECP256R1()
+        private_numbers = ec.EllipticCurvePrivateNumbers(private_key_int, ec.EllipticCurvePublicNumbers(0, 0, curve))
+        private_key = private_numbers.private_key(curve)
+        
+        # Serialize to PEM format (what pywebpush expects)
+        pem_key = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+        
+        return pem_key.decode('utf-8')
+    except Exception as e:
+        logger.error(f'Error converting VAPID private key: {e}')
+        raise
 
 
 def send_push_notification(subscription, title, body, data=None):
@@ -47,6 +84,9 @@ def send_push_notification(subscription, title, body, data=None):
             "sub": settings.VAPID_CLAIM_EMAIL
         }
         
+        # Convert VAPID private key from base64url to PEM format
+        vapid_private_key_pem = _convert_vapid_private_key(settings.VAPID_PRIVATE_KEY)
+        
         # Create notification payload
         # For Safari/Chrome compatibility, we send the payload as JSON string
         payload = {
@@ -65,7 +105,7 @@ def send_push_notification(subscription, title, body, data=None):
         webpush(
             subscription_info=subscription_info,
             data=json.dumps(payload),
-            vapid_private_key=settings.VAPID_PRIVATE_KEY,
+            vapid_private_key=vapid_private_key_pem,
             vapid_claims=vapid_claims,
             ttl=86400  # 24 hours TTL for push notifications
         )
@@ -81,7 +121,7 @@ def send_push_notification(subscription, title, body, data=None):
             subscription.delete()
         return False
     except Exception as e:
-        logger.error(f'Error sending push notification: {e}')
+        logger.error(f'Error sending push notification: {e}', exc_info=True)
         return False
 
 
