@@ -3,21 +3,33 @@
 Generate VAPID keys for Web Push API
 Run this once to generate keys, then add them to settings.py
 """
-from py_vapid import Vapid01
 import base64
-import json
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import serialization
 
-# Generate new VAPID keys
-vapid = Vapid01()
-vapid.generate_keys()
+# Generate new VAPID keys using cryptography library directly
+# Use SECP256R1 curve (same as P-256)
+curve = ec.SECP256R1()
+private_key = ec.generate_private_key(curve)
+public_key = private_key.public_key()
 
-# Get public and private keys
-public_key = vapid.public_key.public_bytes_raw
-private_key = vapid.private_key.private_bytes_raw
+# Get public key in raw format (uncompressed point)
+public_key_bytes = public_key.public_bytes(
+    encoding=serialization.Encoding.X962,
+    format=serialization.PublicFormat.UncompressedPoint
+)
 
-# Encode to base64url (Web Push format)
-public_key_b64 = base64.urlsafe_b64encode(public_key).decode('utf-8').rstrip('=')
-private_key_b64 = base64.urlsafe_b64encode(private_key).decode('utf-8').rstrip('=')
+# Remove the first byte (0x04) which indicates uncompressed format
+# VAPID public key is 65 bytes (0x04 + 64 bytes), we need 64 bytes
+public_key_raw = public_key_bytes[1:]
+
+# Get private key numbers and extract raw 32-byte value
+private_numbers = private_key.private_numbers()
+private_key_raw = private_numbers.private_value.to_bytes(32, 'big')
+
+# Encode to base64url (Web Push format) - remove padding
+public_key_b64 = base64.urlsafe_b64encode(public_key_raw).decode('utf-8').rstrip('=')
+private_key_b64 = base64.urlsafe_b64encode(private_key_raw).decode('utf-8').rstrip('=')
 
 print("=" * 60)
 print("VAPID Keys Generated Successfully!")
