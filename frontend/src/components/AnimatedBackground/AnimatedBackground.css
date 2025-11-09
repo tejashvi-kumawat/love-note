@@ -1,0 +1,126 @@
+.animated-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Floating Hearts */
+.floating-heart {
+  position: absolute;
+  width: calc(30px * var(--size-multiplier, 1));
+  height: calc(30px * var(--size-multiplier, 1));
+  color: rgba(233, 30, 99, 0.35);
+  opacity: var(--heart-opacity, 0);
+  pointer-events: none;
+  will-change: transform, opacity, left, top;
+  filter: blur(0.5px);
+}
+
+.big-floating-heart {
+  color: rgba(233, 30, 99, 0.45);
+  filter: blur(0.3px);
+}
+
+.floating-heart svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 6px rgba(233, 30, 99, 0.3));
+}
+
+.big-floating-heart svg {
+  filter: drop-shadow(0 0 8px rgba(233, 30, 99, 0.4));
+}
+
+/* Animation removed - using JavaScript-based movement with collision detection */
+
+/* Corner Hearts - Tilted */
+.corner-heart {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  color: rgba(233, 30, 99, 0.25);
+  opacity: 0.5;
+  animation: gentlePulse 4s ease-in-out infinite;
+  pointer-events: none;
+  will-change: transform, opacity;
+  filter: blur(1px);
+}
+
+.corner-heart svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 8px rgba(233, 30, 99, 0.3));
+}
+
+.corner-heart-top-left {
+  top: -30px;
+  left: -30px;
+  transform: rotate(-25deg);
+  animation-delay: 0s;
+}
+
+.corner-heart-top-right {
+  top: -30px;
+  right: -30px;
+  transform: rotate(25deg);
+  animation-delay: 1s;
+}
+
+.corner-heart-bottom-left {
+  bottom: -30px;
+  left: -30px;
+  transform: rotate(25deg);
+  animation-delay: 2s;
+}
+
+.corner-heart-bottom-right {
+  bottom: -30px;
+  right: -30px;
+  transform: rotate(-25deg);
+  animation-delay: 1.5s;
+}
+
+@keyframes gentlePulse {
+  0%, 100% {
+    transform: scale(1) rotate(var(--rotation, 0deg));
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.1) rotate(var(--rotation, 0deg));
+    opacity: 0.7;
+  }
+}
+
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .corner-heart {
+    width: 80px;
+    height: 80px;
+  }
+
+  .floating-heart {
+    width: 20px;
+    height: 20px;
+  }
+
+  .floating-heart:nth-child(2),
+  .floating-heart:nth-child(7),
+  .floating-heart:nth-child(12) {
+    width: 25px;
+    height: 25px;
+  }
+
+  .floating-heart:nth-child(4),
+  .floating-heart:nth-child(9),
+  .floating-heart:nth-child(14) {
+    width: 30px;
+    height: 30px;
+  }
+}
+

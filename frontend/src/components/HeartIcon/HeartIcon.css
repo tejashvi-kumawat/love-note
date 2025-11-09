@@ -1,0 +1,39 @@
+.heart-icon {
+  display: inline-block;
+  vertical-align: middle;
+  color: var(--accent-color);
+  transition: var(--transition);
+}
+
+.heart-icon.filled {
+  color: var(--accent-color);
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+.heart-small {
+  width: 16px;
+  height: 16px;
+}
+
+.heart-medium {
+  width: 24px;
+  height: 24px;
+}
+
+.heart-large {
+  width: 32px;
+  height: 32px;
+}
+
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  10%, 30% {
+    transform: scale(1.1);
+  }
+  20%, 40% {
+    transform: scale(1);
+  }
+}
+

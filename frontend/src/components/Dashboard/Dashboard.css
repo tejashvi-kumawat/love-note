@@ -1,0 +1,134 @@
+.dashboard {
+  min-height: 100vh;
+  background: transparent;
+  position: relative;
+  z-index: 2;
+}
+
+.dashboard-nav {
+  background: rgba(255, 240, 245, 0.7);
+  padding: 20px 40px;
+  box-shadow: 0 8px 32px rgba(233, 30, 99, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-brand h1 {
+  font-size: 1.8rem;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+  margin: 0;
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  justify-content: center;
+}
+
+.nav-tabs button {
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: var(--transition);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-tabs button:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.nav-tabs button.active {
+  color: #e91e63;
+  background: rgba(233, 30, 99, 0.15);
+}
+
+.nav-tabs button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 3px;
+  background: var(--primary-gradient);
+  border-radius: 2px;
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.username {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.logout-btn {
+  padding: 10px 20px;
+  background: var(--secondary-gradient);
+  color: white;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: var(--transition);
+}
+
+.logout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.dashboard-content {
+  padding: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .dashboard-nav {
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px 20px;
+  }
+
+  .nav-tabs {
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .nav-tabs button.active::after {
+    display: none;
+  }
+
+  .dashboard-content {
+    padding: 20px;
+  }
+}
+
