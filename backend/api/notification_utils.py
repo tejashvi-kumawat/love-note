@@ -183,7 +183,11 @@ def send_notification_to_partner(user, notification_type, title, body, note_id=N
     
     try:
         partner_profile = UserProfile.objects.filter(user=target_user).first()
-        if not partner_profile or not partner_profile.notifications_enabled:
+        if not partner_profile:
+            logger.warning(f'No profile found for target user {target_user.username} for notification "{title}"')
+            return
+        if not partner_profile.notifications_enabled:
+            logger.info(f'Notifications disabled for {target_user.username}, skipping notification "{title}"')
             return
         
         # Check if this notification type is enabled

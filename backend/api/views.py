@@ -300,15 +300,15 @@ def toggle_note_like(request, note_id):
                     (note.author.partner and note.author.partner == user)
                 )
                 if are_partners:
-                    # Send notification to note author
-                    # recipient_user parameter tells function to send to note.author instead of user.partner
+                    # Send notification to note author (not user.partner)
+                    # When user A likes user B's note, notify user B
                     send_notification_to_partner(
-                        user,  # Trigger user
+                        user,  # Trigger user (who liked)
                         'note_liked',
                         f'❤️ {user.username} liked your note',
                         f'"{note.title}"',
                         note_id=note.id,
-                        recipient_user=note.author  # Send to note author
+                        recipient_user=note.author  # Send to note author (who created the note)
                     )
             return Response({'message': 'Note liked', 'is_liked': True})
             
