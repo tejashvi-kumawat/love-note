@@ -4,6 +4,8 @@
  * Works in Safari, Chrome, and PWA mode
  */
 
+import config from '../config'
+
 class NotificationService {
   constructor() {
     this.permission = null
@@ -287,17 +289,16 @@ class NotificationService {
       // Check if already subscribed
       let subscription = await registration.pushManager.getSubscription()
       
+      // Get API base URL from config (same as axios uses)
+      const API_BASE_URL = config.API_BASE_URL
+      
+      // Get auth token
+      const token = localStorage.getItem('token')
+      if (!token) {
+        return null
+      }
+      
       if (!subscription) {
-        // Get API base URL from config
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
-          (import.meta.env.PROD ? 'https://lovenotes.pythonanywhere.com' : 'http://localhost:8000')
-        
-        // Get auth token
-        const token = localStorage.getItem('token')
-        if (!token) {
-          return null
-        }
-        
         // Request VAPID public key from backend
         const response = await fetch(`${API_BASE_URL}/api/push/vapid-public-key/`, {
           headers: {
@@ -306,7 +307,7 @@ class NotificationService {
         })
         
         if (!response.ok) {
-          console.log('VAPID key not available, skipping push subscription')
+          console.log('VAPID key not available, skipping push subscription', response.status)
           return null
         }
         
@@ -323,10 +324,6 @@ class NotificationService {
       }
 
       // Send subscription to backend
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
-        (import.meta.env.PROD ? 'https://lovenotes.pythonanywhere.com' : 'http://localhost:8000')
-      const token = localStorage.getItem('token')
-      
       const subData = {
         endpoint: subscription.endpoint,
         keys: {
@@ -335,7 +332,7 @@ class NotificationService {
         }
       }
 
-      await fetch(`${API_BASE_URL}/api/push/subscribe/`, {
+      const subscribeResponse = await fetch(`${API_BASE_URL}/api/push/subscribe/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -343,6 +340,10 @@ class NotificationService {
         },
         body: JSON.stringify(subData)
       })
+
+      if (!subscribeResponse.ok) {
+        console.error('Failed to save push subscription:', subscribeResponse.status)
+      }
 
       return subscription
     } catch (error) {
