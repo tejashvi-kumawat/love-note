@@ -116,6 +116,7 @@
   padding: 25px;
   overflow: hidden;
   min-height: 0;
+  position: relative;
 }
 
 .editor-title {
@@ -214,6 +215,7 @@
   margin-top: 25px;
   padding-top: 20px;
   border-top: 2px solid #e2e8f0;
+  flex-shrink: 0; /* Prevent footer from being hidden */
 }
 
 .shared-toggle {
@@ -428,5 +430,101 @@
 
 .viewer-content a:visited {
   color: #ad1457;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .editor-toolbar {
+    padding: 10px;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    min-height: 60px;
+  }
+
+  .toolbar-group {
+    flex-shrink: 0;
+    padding-right: 10px;
+    gap: 4px;
+  }
+
+  .toolbar-btn {
+    padding: 6px 10px;
+    min-width: 32px;
+    font-size: 0.85rem;
+  }
+
+  .font-size-select {
+    padding: 6px 8px;
+    font-size: 0.8rem;
+    min-width: 80px;
+  }
+
+  .color-picker {
+    width: 32px;
+    height: 32px;
+  }
+
+  .editor-content {
+    padding: 15px;
+  }
+
+  .editor-title {
+    font-size: 1.5rem;
+    padding: 10px 0;
+    margin-bottom: 15px;
+  }
+
+  .editor-body {
+    min-height: 300px;
+    padding: 15px;
+    font-size: 1rem;
+  }
+
+  .editor-footer {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+    margin-top: 20px;
+    padding-top: 15px;
+  }
+
+  .editor-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .cancel-btn,
+  .save-btn {
+    flex: 1;
+    padding: 14px 20px;
+    font-size: 0.95rem;
+  }
+
+  .shared-toggle {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .viewer-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .viewer-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .viewer-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .viewer-content {
+    padding: 15px;
+    font-size: 1rem;
+  }
 }
 
