@@ -150,19 +150,9 @@ const Notes = () => {
   const handleToggleLike = async (noteId, e) => {
     e.stopPropagation()
     try {
-      // Get the note before toggling to check author
-      const note = notes.find(n => n.id === noteId)
-      
       const response = await axios.post(`/api/notes/${noteId}/like/`)
       
-      // Send notification to note author if liked (not if unliked)
-      // Only send if: note was liked, note exists, current user is not the author, user has a partner
-      if (response.data.is_liked && note && note.author?.id !== user?.id && user?.partner) {
-        // Use setTimeout to ensure notification is sent in user interaction context (important for Safari)
-        setTimeout(() => {
-          notificationService.notifyNoteLiked(user.username, note.title)
-        }, 0)
-      }
+      // Backend handles notifications - no need to send from frontend
       
       // Refresh notes to get updated like status
       await fetchNotes()
@@ -536,17 +526,9 @@ const Notes = () => {
             likes={selectedNote.likes || []}
             onToggleLike={async (noteId) => {
               try {
-                // Get the note before toggling to check author
-                const note = notes.find(n => n.id === noteId)
-                
                 const response = await axios.post(`/api/notes/${noteId}/like/`)
                 
-                // Send notification to note author if liked (not if unliked)
-                if (response.data.is_liked && note && note.author?.id !== user?.id && user?.partner) {
-                  setTimeout(() => {
-                    notificationService.notifyNoteLiked(user.username, note.title)
-                  }, 0)
-                }
+                // Backend handles notifications - no need to send from frontend
                 
                 await fetchNotes()
                 if (selectedNote?.id === noteId) {

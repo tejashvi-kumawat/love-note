@@ -89,7 +89,7 @@ def _get_vapid_object():
         raise
 
 
-def send_push_notification(subscription, title, body, data=None):
+def send_push_notification(subscription, title, body, data=None, notification_type=None):
     """
     Send a push notification using Web Push API
     
@@ -122,12 +122,16 @@ def send_push_notification(subscription, title, body, data=None):
         
         # Create notification payload
         # For Safari/Chrome compatibility, we send the payload as JSON string
+        # Use unique tag per notification to allow multiple consecutive notifications
+        note_id_from_data = data.get('note_id') if data else None
+        tag_suffix = f"-{note_id_from_data}-{subscription.id}" if note_id_from_data else f"-{subscription.id}"
+        tag = f"love-notes-{notification_type or 'default'}{tag_suffix}"
         payload = {
             "title": title,
             "body": body,
             "icon": "/icon-192.svg",
             "badge": "/icon-192.svg",
-            "tag": "love-notes",
+            "tag": tag,
             "requireInteraction": False,
         }
         
@@ -217,7 +221,7 @@ def send_notification_to_partner(user, notification_type, title, body, note_id=N
             
             sent_count = 0
             for subscription in subscriptions:
-                if send_push_notification(subscription, title, body, data):
+                if send_push_notification(subscription, title, body, data, notification_type=notification_type):
                     sent_count += 1
             
             logger.info(f'Notification "{title}" sent to {sent_count}/{subscriptions.count()} subscriptions for {target_user.username}')

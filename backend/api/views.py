@@ -293,9 +293,10 @@ def toggle_note_like(request, note_id):
             return Response({'message': 'Note unliked', 'is_liked': False})
         else:
             # Like - send notification to partner (same as note creation)
-            if note.author != user and user.partner:
+            # Only send if user has a partner and didn't like their own note
+            if user.partner and note.author != user:
                 send_notification_to_partner(
-                    user,  # Trigger user (who liked)
+                    user,  # Trigger user (who liked) - notification goes to user.partner
                     'note_liked',
                     f'❤️ {user.username} liked your note',
                     f'"{note.title}"',
