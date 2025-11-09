@@ -34,12 +34,9 @@ def _get_vapid_object():
         raise ImportError('py-vapid not available. Install it with: pip install py-vapid')
     
     try:
-        # py-vapid can create Vapid object from base64url strings
-        # It expects the keys in the format we have
-        vapid = Vapid.from_string(
-            private_key=settings.VAPID_PRIVATE_KEY,
-            public_key=settings.VAPID_PUBLIC_KEY
-        )
+        # py-vapid's from_string() only needs private_key
+        # Public key is derived from private key automatically
+        vapid = Vapid.from_string(private_key=settings.VAPID_PRIVATE_KEY)
         return vapid
     except Exception as e:
         logger.error(f'Error creating Vapid object: {e}', exc_info=True)
