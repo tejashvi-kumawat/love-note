@@ -17,7 +17,7 @@ pip install -r requirements.txt
 ### Step 3: Configure Settings
 1. Update `ALLOWED_HOSTS` in `settings.py`:
 ```python
-ALLOWED_HOSTS = ['yourusername.pythonanywhere.com']
+ALLOWED_HOSTS = ['lovenotes.pythonanywhere.com']
 ```
 
 2. Set `DEBUG = False` for production
@@ -38,9 +38,9 @@ python manage.py collectstatic --noinput
 
 ### Step 5: Configure Web App
 1. Go to Web tab in PythonAnywhere dashboard
-2. Set source code path: `/home/yourusername/backend`
-3. Set working directory: `/home/yourusername/backend`
-4. Set WSGI file: `/var/www/yourusername_pythonanywhere_com_wsgi.py`
+2. Set source code path: `/home/lovenotes/love-note/backend`
+3. Set working directory: `/home/lovenotes/love-note/backend`
+4. Set WSGI file: `/var/www/lovenotes_pythonanywhere_com_wsgi.py`
 5. Edit WSGI file to point to your Django app
 
 ### Step 6: Update WSGI File
@@ -48,7 +48,7 @@ python manage.py collectstatic --noinput
 import os
 import sys
 
-path = '/home/yourusername/backend'
+path = '/home/lovenotes/love-note/backend'
 if path not in sys.path:
     sys.path.insert(0, path)
 
@@ -63,7 +63,7 @@ application = get_wsgi_application()
 ### Step 1: Environment Variables
 In Vercel dashboard, add:
 ```
-VITE_API_BASE_URL=https://yourusername.pythonanywhere.com
+VITE_API_BASE_URL=https://lovenotes.pythonanywhere.com
 ```
 
 ### Step 2: Deploy
