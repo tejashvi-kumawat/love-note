@@ -4,9 +4,12 @@ import Calendar from '../Calendar/Calendar'
 import RichTextEditor from '../RichTextEditor/RichTextEditor'
 import HeartIcon from '../HeartIcon/HeartIcon'
 import { format } from 'date-fns'
+import { useAuth } from '../../contexts/AuthContext'
+import notificationService from '../../services/notificationService'
 import './Notes.css'
 
 const Notes = () => {
+  const { user } = useAuth()
   const [notes, setNotes] = useState([])
   const [selectedNote, setSelectedNote] = useState(null)
   const [isEditing, setIsEditing] = useState(false)
@@ -32,8 +35,17 @@ const Notes = () => {
     }
   }
   
+  const [lastNoteIds, setLastNoteIds] = useState(new Set())
+
   useEffect(() => {
     fetchNotes()
+    
+    // Set up polling to check for new notes from partner (every 30 seconds)
+    const pollInterval = setInterval(() => {
+      fetchNotes()
+    }, 30000) // Poll every 30 seconds
+    
+    return () => clearInterval(pollInterval)
   }, []) // Fetch notes on mount
 
   useEffect(() => {
@@ -46,6 +58,35 @@ const Notes = () => {
       fetchNotes()
     }
   }, [searchQuery, searchType])
+
+  // Check for new notes and send notifications
+  useEffect(() => {
+    if (notes.length > 0 && lastNoteIds.size > 0) {
+      // Find new notes (notes that weren't in lastNoteIds)
+      const newNotes = notes.filter(note => 
+        !lastNoteIds.has(note.id) && 
+        note.author?.id !== user?.id && // Only notify for partner's notes
+        user?.partner
+      )
+      
+      newNotes.forEach(note => {
+        // Check if it's a newly created note (recently created)
+        const noteDate = new Date(note.created_at)
+        const now = new Date()
+        const minutesDiff = (now - noteDate) / (1000 * 60)
+        
+        // Only notify if note was created in the last 5 minutes (to avoid old notes triggering notifications)
+        if (minutesDiff < 5) {
+          notificationService.notifyNoteCreated(note.author?.username || 'Your partner', note.title)
+        }
+      })
+    }
+    
+    // Update lastNoteIds
+    if (notes.length > 0) {
+      setLastNoteIds(new Set(notes.map(n => n.id)))
+    }
+  }, [notes, user])
 
   const handleCreateNote = () => {
     const newNote = {
@@ -61,6 +102,7 @@ const Notes = () => {
   const handleSaveNote = async (title, content, isShared) => {
     try {
       let savedNote
+      
       // Always share with partner
       if (selectedNote?.id) {
         const response = await axios.put(`/api/notes/${selectedNote.id}/`, {
@@ -104,7 +146,17 @@ const Notes = () => {
   const handleToggleLike = async (noteId, e) => {
     e.stopPropagation()
     try {
+      // Get the note before toggling to check author
+      const note = notes.find(n => n.id === noteId)
+      
       const response = await axios.post(`/api/notes/${noteId}/like/`)
+      
+      // Send notification to note author if liked (not if unliked)
+      // Only send if: note was liked, note exists, current user is not the author, user has a partner
+      if (response.data.is_liked && note && note.author?.id !== user?.id && user?.partner) {
+        notificationService.notifyNoteLiked(user.username, note.title)
+      }
+      
       // Refresh notes to get updated like status
       await fetchNotes()
       // Update selected note if it's the one being liked

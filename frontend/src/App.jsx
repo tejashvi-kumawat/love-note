@@ -1,13 +1,20 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { AuthProvider } from './contexts/AuthContext'
 import Login from './components/Auth/Login'
 import Register from './components/Auth/Register'
 import Dashboard from './components/Dashboard/Dashboard'
 import PrivateRoute from './components/Auth/PrivateRoute'
 import AnimatedBackground from './components/AnimatedBackground/AnimatedBackground'
+import notificationService from './services/notificationService'
 import './App.css'
 
 function App() {
+  useEffect(() => {
+    // Initialize notification service when app loads
+    notificationService.initialize()
+  }, [])
+
   return (
     <AuthProvider>
       <AnimatedBackground />

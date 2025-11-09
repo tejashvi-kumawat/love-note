@@ -4,9 +4,12 @@ import Calendar from '../Calendar/Calendar'
 import RichTextEditor from '../RichTextEditor/RichTextEditor'
 import HeartIcon from '../HeartIcon/HeartIcon'
 import { format } from 'date-fns'
+import { useAuth } from '../../contexts/AuthContext'
+import notificationService from '../../services/notificationService'
 import './Journal.css'
 
 const Journal = () => {
+  const { user } = useAuth()
   const [entries, setEntries] = useState([])
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [selectedEntry, setSelectedEntry] = useState(null)
@@ -14,8 +17,17 @@ const Journal = () => {
   const [loading, setLoading] = useState(true)
   const [expandedEntry, setExpandedEntry] = useState(null) // Track which entry is expanded
 
+  const [lastEntryIds, setLastEntryIds] = useState(new Set())
+
   useEffect(() => {
     fetchEntries()
+    
+    // Set up polling to check for new journal entries from partner (every 30 seconds)
+    const pollInterval = setInterval(() => {
+      fetchEntries()
+    }, 30000) // Poll every 30 seconds
+    
+    return () => clearInterval(pollInterval)
   }, [])
 
   useEffect(() => {
@@ -23,6 +35,36 @@ const Journal = () => {
       fetchEntryForDate(selectedDate)
     }
   }, [selectedDate])
+
+  // Check for new journal entries and send notifications
+  useEffect(() => {
+    if (entries.length > 0 && lastEntryIds.size > 0) {
+      // Find new entries (entries that weren't in lastEntryIds)
+      const newEntries = entries.filter(entry => 
+        !lastEntryIds.has(entry.id) && 
+        entry.author?.id !== user?.id && // Only notify for partner's entries
+        user?.partner
+      )
+      
+      newEntries.forEach(entry => {
+        // Check if it's a newly created entry (recently created)
+        const entryDate = new Date(entry.created_at)
+        const now = new Date()
+        const minutesDiff = (now - entryDate) / (1000 * 60)
+        
+        // Only notify if entry was created in the last 5 minutes
+        if (minutesDiff < 5) {
+          const dateStr = format(new Date(entry.date), 'yyyy-MM-dd')
+          notificationService.notifyJournalCreated(entry.author?.username || 'Your partner', dateStr)
+        }
+      })
+    }
+    
+    // Update lastEntryIds
+    if (entries.length > 0) {
+      setLastEntryIds(new Set(entries.map(e => e.id)))
+    }
+  }, [entries, user])
 
   const fetchEntries = async () => {
     try {
@@ -95,6 +137,7 @@ const Journal = () => {
     try {
       // Always share with partner
       const dateStr = format(selectedDate, 'yyyy-MM-dd')
+      
       if (selectedEntry?.id) {
         const response = await axios.put(`/api/journal/${selectedEntry.id}/`, {
           title,

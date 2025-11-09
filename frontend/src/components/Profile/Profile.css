@@ -249,6 +249,67 @@
   font-size: 1.1rem;
 }
 
+.notification-info {
+  margin-bottom: 20px;
+}
+
+.info-message {
+  padding: 15px 20px;
+  background: rgba(23, 162, 184, 0.1);
+  color: #17a2b8;
+  border: 2px solid #17a2b8;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.enable-notifications-btn {
+  padding: 10px 20px;
+  background: #17a2b8;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.enable-notifications-btn:hover {
+  background: #138496;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+}
+
+.notification-subsection {
+  margin-top: 20px;
+  padding: 20px;
+  background: rgba(255, 250, 252, 0.5);
+  border-radius: 10px;
+  border: 1px solid rgba(233, 30, 99, 0.1);
+}
+
+.notification-subsection h4 {
+  font-size: 1.2rem;
+  color: var(--text-primary);
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(233, 30, 99, 0.2);
+}
+
+.notification-subsection .form-group {
+  margin-bottom: 15px;
+}
+
+.notification-subsection .checkbox-label {
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
 @media (max-width: 768px) {
   .profile-container {
     padding: 20px;
@@ -267,6 +328,15 @@
     flex-direction: column;
     gap: 15px;
     text-align: center;
+  }
+
+  .info-message {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .enable-notifications-btn {
+    width: 100%;
   }
 }
 

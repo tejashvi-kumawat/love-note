@@ -112,6 +112,16 @@ class UserProfile(models.Model):
     share_love_language = models.BooleanField(default=False)
     share_personal_notes = models.BooleanField(default=False)
     
+    # Notification preferences
+    notifications_enabled = models.BooleanField(default=False, help_text='Enable browser notifications')
+    notify_note_created = models.BooleanField(default=True, help_text='Notify when partner creates a note')
+    notify_note_updated = models.BooleanField(default=True, help_text='Notify when partner updates a note')
+    notify_note_liked = models.BooleanField(default=True, help_text='Notify when partner likes a note')
+    notify_journal_created = models.BooleanField(default=True, help_text='Notify when partner creates a journal entry')
+    notify_journal_updated = models.BooleanField(default=True, help_text='Notify when partner updates a journal entry')
+    notify_journal_reminder = models.BooleanField(default=True, help_text='Enable nightly journal reminder notifications')
+    journal_reminder_time = models.TimeField(default='21:00:00', help_text='Time for nightly journal reminder (24-hour format)')
+    
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
