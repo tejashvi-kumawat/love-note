@@ -152,7 +152,15 @@ CORS_ALLOW_CREDENTIALS = True
 
 # Web Push API / VAPID Keys for notifications
 # Generate keys using: python generate_vapid_keys.py
-VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
-VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
-VAPID_CLAIM_EMAIL = os.environ.get('VAPID_CLAIM_EMAIL', 'mailto:admin@lovenotes.com')
+# Keys can be set via environment variables or .env file
+try:
+    from decouple import config
+    VAPID_PUBLIC_KEY = config('VAPID_PUBLIC_KEY', default='')
+    VAPID_PRIVATE_KEY = config('VAPID_PRIVATE_KEY', default='')
+    VAPID_CLAIM_EMAIL = config('VAPID_CLAIM_EMAIL', default='mailto:admin@lovenotes.com')
+except ImportError:
+    # Fallback to os.environ if decouple not available
+    VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
+    VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
+    VAPID_CLAIM_EMAIL = os.environ.get('VAPID_CLAIM_EMAIL', 'mailto:admin@lovenotes.com')
 
