@@ -1,0 +1,32 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff6b9d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e91e63;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffe0e8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGradient)"/>
+  
+  <!-- Decorative hearts -->
+  <g opacity="0.2">
+    <path d="M128 100 C128 72, 141 60, 170 60 C199 60, 212 72, 212 100 C212 128, 170 170, 170 170 C170 170, 128 128, 128 100 Z" fill="white"/>
+    <path d="M384 100 C384 72, 371 60, 342 60 C313 60, 300 72, 300 100 C300 128, 342 170, 342 170 C342 170, 384 128, 384 100 Z" fill="white"/>
+  </g>
+  
+  <!-- Main heart icon -->
+  <path d="M256 140 C256 108, 270 100, 300 100 C330 100, 344 108, 344 140 C344 172, 300 212, 256 256 C212 212, 168 172, 168 140 C168 108, 184 100, 212 100 C242 100, 256 108, 256 140 Z" fill="white" opacity="0.3"/>
+  
+  <!-- "Love Note" text -->
+  <text x="256" y="280" font-family="Arial, sans-serif" font-size="70" font-weight="bold" fill="url(#textGradient)" text-anchor="middle" dominant-baseline="middle">Love</text>
+  <text x="256" y="370" font-family="Arial, sans-serif" font-size="70" font-weight="bold" fill="url(#textGradient)" text-anchor="middle" dominant-baseline="middle">Note</text>
+  
+  <!-- Small heart accent -->
+  <path d="M256 412 C256 405, 262 400, 270 400 C278 400, 284 405, 284 412 C284 419, 270 434, 256 448 C242 434, 228 419, 228 412 C228 405, 234 400, 242 400 C250 400, 256 405, 256 412 Z" fill="white" opacity="0.8"/>
+</svg>
+
