@@ -9,6 +9,52 @@ import base64
 
 logger = logging.getLogger(__name__)
 
+# Fix for pywebpush 1.14.0 bug with cryptography >=43.0.0
+# The bug is in pywebpush/__init__.py line 203: ec.generate_private_key(ec.SECP256R1, ...)
+# Should be: ec.generate_private_key(ec.SECP256R1(), ...)
+# We'll monkey patch the problematic function
+try:
+    import pywebpush
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from cryptography.hazmat.backends import default_backend
+    
+    # Monkey patch the buggy line in pywebpush
+    # The bug is in WebPusher.encode() method
+    if hasattr(pywebpush, 'WebPusher'):
+        WebPusher = pywebpush.WebPusher
+        original_encode = WebPusher.encode
+        
+        def patched_encode(self, data, content_encoding='aesgcm'):
+            """Patched encode method to fix ec.SECP256R1 bug"""
+            # Import the modules needed
+            from cryptography.hazmat.primitives.asymmetric import ec as ec_module
+            from cryptography.hazmat.backends import default_backend as backend_module
+            
+            # Monkey patch ec.generate_private_key to fix the bug
+            original_generate = ec_module.generate_private_key
+            
+            def fixed_generate_private_key(curve, backend=None):
+                # If curve is a class instead of instance, instantiate it
+                if isinstance(curve, type):
+                    curve = curve()
+                return original_generate(curve, backend)
+            
+            # Temporarily replace the function
+            ec_module.generate_private_key = fixed_generate_private_key
+            
+            try:
+                result = original_encode(self, data, content_encoding)
+                return result
+            finally:
+                # Restore original function
+                ec_module.generate_private_key = original_generate
+        
+        # Replace the encode method
+        WebPusher.encode = patched_encode
+except Exception as e:
+    # If patching fails, log and continue
+    logger.warning(f'Could not patch pywebpush: {e}')
+
 try:
     from pywebpush import webpush, WebPushException
     WEBPUSH_AVAILABLE = True
