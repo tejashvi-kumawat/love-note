@@ -11,6 +11,7 @@ urlpatterns = [
     path('profile/', views.profile_view, name='profile'),
     path('profile/partner/', views.partner_profile_view, name='partner-profile'),
     
+    path('push/vapid-public-key/', views.get_vapid_public_key, name='vapid-public-key'),
     path('push/subscribe/', views.save_push_subscription, name='push-subscribe'),
     path('push/unsubscribe/<int:subscription_id>/', views.delete_push_subscription, name='push-unsubscribe'),
     

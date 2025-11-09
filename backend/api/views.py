@@ -13,6 +13,7 @@ from .serializers import (
     JournalEntrySerializer, PartnerRequestSerializer,
     UserProfileSerializer, PartnerProfileSerializer, PushSubscriptionSerializer
 )
+from .notification_utils import send_notification_to_partner
 import json
 
 
@@ -128,7 +129,16 @@ class NoteListCreateView(generics.ListCreateAPIView):
         return queryset
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        note = serializer.save(author=self.request.user)
+        # Send notification to partner
+        if note.is_shared and self.request.user.partner:
+            send_notification_to_partner(
+                self.request.user,
+                'note_created',
+                f'💕 New Note from {self.request.user.username}',
+                f'"{note.title}"',
+                note_id=note.id
+            )
 
 
 class NoteDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -156,13 +166,22 @@ class NoteDetailView(generics.RetrieveUpdateDestroyAPIView):
         if note.author == user:
             serializer = self.get_serializer(note, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
-            serializer.save()
+            updated_note = serializer.save()
             # Clear any pending edit requests
             note.edit_requested_by = None
             note.edit_approved_by = None
             note.pending_title = None
             note.pending_content = None
             note.save()
+            # Send notification to partner
+            if updated_note.is_shared and user.partner:
+                send_notification_to_partner(
+                    user,
+                    'note_updated',
+                    f'✏️ Note Updated by {user.username}',
+                    f'"{updated_note.title}"',
+                    note_id=updated_note.id
+                )
             return Response(serializer.data)
         
         # Partner trying to edit - need approval
@@ -262,7 +281,15 @@ def toggle_note_like(request, note_id):
             like.delete()
             return Response({'message': 'Note unliked', 'is_liked': False})
         else:
-            # Like - return success
+            # Like - send notification to note author
+            if note.author != user and note.author.partner == user:
+                send_notification_to_partner(
+                    user,
+                    'note_liked',
+                    f'❤️ {user.username} liked your note',
+                    f'"{note.title}"',
+                    note_id=note.id
+                )
             return Response({'message': 'Note liked', 'is_liked': True})
             
     except Note.DoesNotExist:
@@ -283,7 +310,17 @@ class JournalEntryListCreateView(generics.ListCreateAPIView):
         return JournalEntry.objects.filter(author=user)
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        entry = serializer.save(author=self.request.user)
+        # Send notification to partner
+        if entry.is_shared and self.request.user.partner:
+            date_str = entry.date.strftime('%Y-%m-%d')
+            send_notification_to_partner(
+                self.request.user,
+                'journal_created',
+                f'📔 New Journal Entry from {self.request.user.username}',
+                f'Entry for {date_str}',
+                journal_date=date_str
+            )
 
 
 class JournalEntryDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -312,13 +349,23 @@ class JournalEntryDetailView(generics.RetrieveUpdateDestroyAPIView):
         if entry.author == user:
             serializer = self.get_serializer(entry, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
-            serializer.save()
+            updated_entry = serializer.save()
             # Clear any pending edit requests
             entry.edit_requested_by = None
             entry.edit_approved_by = None
             entry.pending_title = None
             entry.pending_content = None
             entry.save()
+            # Send notification to partner
+            if updated_entry.is_shared and user.partner:
+                date_str = updated_entry.date.strftime('%Y-%m-%d')
+                send_notification_to_partner(
+                    user,
+                    'journal_updated',
+                    f'✏️ Journal Updated by {user.username}',
+                    f'Entry for {date_str}',
+                    journal_date=date_str
+                )
             return Response(serializer.data)
         
         # Partner trying to edit - need approval
@@ -426,6 +473,16 @@ def profile_view(request):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_vapid_public_key(request):
+    """Get VAPID public key for push subscription"""
+    from django.conf import settings
+    if not settings.VAPID_PUBLIC_KEY:
+        return Response({'error': 'VAPID keys not configured'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    return Response({'publicKey': settings.VAPID_PUBLIC_KEY})
 
 
 @api_view(['POST'])

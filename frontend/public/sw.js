@@ -54,10 +54,8 @@ self.addEventListener('fetch', (event) => {
   )
 })
 
-// Push event - handle push notifications (for future use)
+// Push event - handle push notifications from backend
 self.addEventListener('push', (event) => {
-  console.log('[Service Worker] Push notification received')
-  
   let notificationData = {
     title: 'Love Notes',
     body: 'You have a new notification',

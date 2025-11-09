@@ -274,6 +274,97 @@ class NotificationService {
   }
 
   /**
+   * Subscribe to Web Push API for background notifications
+   */
+  async subscribeToPush() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      return null
+    }
+
+    try {
+      const registration = await navigator.serviceWorker.ready
+      
+      // Check if already subscribed
+      let subscription = await registration.pushManager.getSubscription()
+      
+      if (!subscription) {
+        // Request VAPID public key from backend
+        const response = await fetch('/api/push/vapid-public-key/')
+        if (!response.ok) {
+          console.log('VAPID key not available, skipping push subscription')
+          return null
+        }
+        
+        const { publicKey } = await response.json()
+        
+        // Convert base64url to Uint8Array
+        const applicationServerKey = this.urlBase64ToUint8Array(publicKey)
+        
+        // Subscribe to push
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: applicationServerKey
+        })
+      }
+
+      // Send subscription to backend
+      const subData = {
+        endpoint: subscription.endpoint,
+        keys: {
+          p256dh: this.arrayBufferToBase64(subscription.getKey('p256dh')),
+          auth: this.arrayBufferToBase64(subscription.getKey('auth'))
+        }
+      }
+
+      await fetch('/api/push/subscribe/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(subData)
+      })
+
+      return subscription
+    } catch (error) {
+      console.error('Error subscribing to push:', error)
+      return null
+    }
+  }
+
+  /**
+   * Convert base64url to Uint8Array
+   */
+  urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4)
+    const base64 = (base64String + padding)
+      .replace(/\-/g, '+')
+      .replace(/_/g, '/')
+
+    const rawData = window.atob(base64)
+    const outputArray = new Uint8Array(rawData.length)
+
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i)
+    }
+    return outputArray
+  }
+
+  /**
+   * Convert ArrayBuffer to base64
+   */
+  arrayBufferToBase64(buffer) {
+    const bytes = new Uint8Array(buffer)
+    let binary = ''
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i])
+    }
+    return window.btoa(binary)
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '')
+  }
+
+  /**
    * Initialize notification service
    */
   async initialize() {
@@ -282,6 +373,8 @@ class NotificationService {
     
     if (this.permission === 'granted') {
       this.scheduleJournalReminder(reminderTime)
+      // Subscribe to push notifications for background support
+      await this.subscribeToPush()
     }
   }
 
