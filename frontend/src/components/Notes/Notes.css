@@ -18,7 +18,7 @@
   border: 1px solid rgba(255, 255, 255, 0.4);
   position: relative;
   z-index: 2;
-  height: fit-content;
+  height: 75vh; /* 75% of viewport height */
   max-height: calc(100vh - 120px);
 }
 
@@ -174,8 +174,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 450px; /* Limit to show 2-3 note cards */
   min-height: 0; /* Allow flex item to shrink */
+  /* Remove max-height so cards show their full height */
 }
 
 .notes-list::-webkit-scrollbar {
@@ -204,8 +204,9 @@
   transition: var(--transition);
   border: 2px solid rgba(233, 30, 99, 0.2);
   position: relative;
-  overflow: hidden;
+  overflow: visible; /* Allow content to show fully */
   margin-bottom: 12px;
+  flex-shrink: 0; /* Don't shrink cards, show full height */
 }
 
 .note-item > * {
@@ -456,6 +457,8 @@
   z-index: 2;
   display: flex;
   flex-direction: column;
+  height: 75vh; /* 75% of viewport height */
+  max-height: calc(100vh - 120px);
 }
 
 .notes-editor > * {
