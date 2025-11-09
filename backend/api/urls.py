@@ -11,6 +11,9 @@ urlpatterns = [
     path('profile/', views.profile_view, name='profile'),
     path('profile/partner/', views.partner_profile_view, name='partner-profile'),
     
+    path('push/subscribe/', views.save_push_subscription, name='push-subscribe'),
+    path('push/unsubscribe/<int:subscription_id>/', views.delete_push_subscription, name='push-unsubscribe'),
+    
     path('notes/', views.NoteListCreateView.as_view(), name='note-list-create'),
     path('notes/<int:pk>/', views.NoteDetailView.as_view(), name='note-detail'),
     path('notes/<int:note_id>/like/', views.toggle_note_like, name='note-like'),

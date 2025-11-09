@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
-from .models import User, Note, JournalEntry, PartnerRequest, UserProfile, NoteLike
+from .models import User, Note, JournalEntry, PartnerRequest, UserProfile, NoteLike, PushSubscription
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -138,4 +138,11 @@ class PartnerProfileSerializer(serializers.ModelSerializer):
             'favorite_food', 'favorite_movie', 'favorite_song', 'favorite_place',
             'hobbies', 'relationship_anniversary', 'love_language', 'personal_notes'
         )
+
+
+class PushSubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PushSubscription
+        fields = ('id', 'endpoint', 'p256dh', 'auth', 'created_at')
+        read_only_fields = ('user', 'created_at', 'updated_at')
 

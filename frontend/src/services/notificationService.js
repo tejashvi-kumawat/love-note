@@ -17,9 +17,7 @@ class NotificationService {
    */
   detectSafari() {
     const ua = navigator.userAgent.toLowerCase()
-    const isSafari = /safari/.test(ua) && !/chrome/.test(ua) && !/chromium/.test(ua)
-    console.log('Browser detection:', { isSafari, userAgent: navigator.userAgent })
-    return isSafari
+    return /safari/.test(ua) && !/chrome/.test(ua) && !/chromium/.test(ua)
   }
 
   /**
@@ -27,18 +25,15 @@ class NotificationService {
    */
   checkPermission() {
     if (!('Notification' in window)) {
-      console.warn('This browser does not support notifications')
       this.permission = 'unsupported'
       return 'unsupported'
     }
-    
     this.permission = Notification.permission
     return this.permission
   }
 
   /**
    * Request notification permission from user
-   * @returns {Promise<string>} Permission status ('granted', 'denied', 'default')
    */
   async requestPermission() {
     if (!('Notification' in window)) {
@@ -53,13 +48,9 @@ class NotificationService {
     try {
       const permission = await Notification.requestPermission()
       this.permission = permission
-      
-      // Save permission status to localStorage
       localStorage.setItem('notificationPermission', permission)
-      
       return permission
     } catch (error) {
-      console.error('Error requesting notification permission:', error)
       this.permission = 'denied'
       return 'denied'
     }
@@ -67,38 +58,22 @@ class NotificationService {
 
   /**
    * Send a notification
-   * @param {string} title - Notification title
-   * @param {object} options - Notification options (body, icon, badge, tag, etc.)
    */
   async sendNotification(title, options = {}) {
-    console.log('sendNotification called:', title, options)
-    
-    // Check if notifications are enabled in user preferences (check both key formats)
+    // Check if notifications are enabled
     const notificationsEnabled = localStorage.getItem('notificationsEnabled') === 'true' || 
                                   localStorage.getItem('notifications_enabled') === 'true'
     
-    console.log('Notifications enabled check:', {
-      notificationsEnabled,
-      'notificationsEnabled': localStorage.getItem('notificationsEnabled'),
-      'notifications_enabled': localStorage.getItem('notifications_enabled')
-    })
-    
     if (!notificationsEnabled) {
-      console.log('Notifications disabled in preferences - skipping')
       return false
     }
 
-    // Check permission - update it first
+    // Check permission
     this.checkPermission()
-    console.log('Current permission:', this.permission, 'Notification.permission:', Notification.permission)
     
-    // Use Notification.permission directly as it's the source of truth
     if (Notification.permission !== 'granted') {
-      console.log('Permission not granted, requesting...', Notification.permission)
       const permission = await this.requestPermission()
-      console.log('Permission after request:', permission)
       if (permission !== 'granted') {
-        console.log('Permission denied:', permission)
         return false
       }
     }
@@ -115,136 +90,55 @@ class NotificationService {
     }
 
     try {
-      // Check if Notification API is available
-      if (!('Notification' in window)) {
-        console.error('Notifications not supported in this browser')
+      if (!('Notification' in window) || Notification.permission !== 'granted') {
         return false
       }
 
-      // Check permission one more time before sending
-      if (Notification.permission !== 'granted') {
-        console.error('Notification permission not granted:', Notification.permission)
-        return false
-      }
-
-      // Try Service Worker first (for PWA and Safari) - but with timeout
-      if ('serviceWorker' in navigator && 'showNotification' in ServiceWorkerRegistration.prototype) {
+      // Try Service Worker first (for PWA)
+      if ('serviceWorker' in navigator) {
         try {
-          console.log('Checking for Service Worker...')
-          // Use Promise.race to timeout after 2 seconds (longer for Safari)
-          const swCheck = Promise.race([
+          const registration = await Promise.race([
             navigator.serviceWorker.ready,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('SW timeout')), 2000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000))
           ])
           
-          const registration = await swCheck
           if (registration && typeof registration.showNotification === 'function') {
-            console.log('Service Worker found, attempting notification...')
             await registration.showNotification(title, defaultOptions)
-            console.log('✅ Notification sent via Service Worker')
             return true
-          } else {
-            console.log('Service Worker found but showNotification not available')
           }
-        } catch (swError) {
-          console.log('Service Worker check failed or timed out, using Notification API:', swError.message || swError)
-          // For Safari, try sending message to Service Worker as fallback
-          if (this.isSafari && 'serviceWorker' in navigator) {
-            try {
-              const registration = await navigator.serviceWorker.getRegistration()
-              if (registration && registration.active) {
-                registration.active.postMessage({
-                  type: 'SHOW_NOTIFICATION',
-                  title,
-                  options: defaultOptions
-                })
-                console.log('✅ Notification sent via Service Worker message (Safari)')
-                return true
-              }
-            } catch (msgError) {
-              console.log('Service Worker message failed:', msgError)
-            }
-          }
+        } catch (error) {
+          // Fall through to Notification API
         }
-      } else {
-        console.log('Service Worker not available, using Notification API directly')
       }
 
-      // Fallback to regular Notification API (works in Safari, Chrome, etc.)
-      console.log('Using Notification API fallback...', { isSafari: this.isSafari })
+      // Fallback to Notification API
+      const notification = new Notification(title, defaultOptions)
       
-      // Safari requires user interaction context for notifications
-      // If it's Safari and we're not in a user interaction context, try to queue it
-      if (this.isSafari) {
-        console.log('Safari detected - ensuring user interaction context')
-        // In Safari, notifications work better when triggered from user actions
-        // For background notifications, we need Service Worker + Push API
-        // For now, try to send it directly - Safari should allow it if permission is granted
+      setTimeout(() => {
+        notification.close()
+      }, this.isSafari ? 10000 : 5000)
+
+      notification.onclick = () => {
+        window.focus()
+        notification.close()
       }
-      
-      try {
-        const notification = new Notification(title, defaultOptions)
-        console.log('✅ Notification created successfully via Notification API')
-        
-        // Auto-close after 5 seconds (but longer for Safari)
-        const closeDelay = this.isSafari ? 10000 : 5000
-        setTimeout(() => {
-          notification.close()
-        }, closeDelay)
 
-        // Handle click event
-        notification.onclick = () => {
-          console.log('Notification clicked')
-          window.focus()
-          notification.close()
-        }
-
-        // Handle error
-        notification.onerror = (error) => {
-          console.error('Notification error:', error)
-        }
-
-        // Safari specific: Show notification
-        if (this.isSafari) {
-          console.log('✅ Safari notification sent')
-        }
-
-        return true
-      } catch (notifError) {
-        console.error('❌ Failed to create notification:', notifError)
-        
-        // Safari specific error handling
-        if (this.isSafari) {
-          console.warn('Safari notification failed. This might be because:')
-          console.warn('1. Not in user interaction context (needs click/action)')
-          console.warn('2. Service Worker + Push API needed for background notifications')
-          console.warn('3. Try adding to home screen as PWA for better support')
-        }
-        
-        throw notifError
-      }
+      return true
     } catch (error) {
-      console.error('❌ Error sending notification:', error)
+      console.error('Error sending notification:', error)
       return false
     }
   }
 
   /**
    * Notify when partner creates a note
-   * @param {string} partnerName - Partner's username
-   * @param {string} noteTitle - Note title
    */
   async notifyNoteCreated(partnerName, noteTitle) {
-    const enabled = localStorage.getItem('notify_note_created') !== 'false' &&
-                    localStorage.getItem('notifyNoteCreated') !== 'false'
-    if (!enabled) {
-      console.log('Note created notification disabled')
-      return false
-    }
+    const enabled = localStorage.getItem('notify_note_created') !== 'false'
+    if (!enabled) return false
 
-    console.log('Sending note created notification:', partnerName, noteTitle)
     return await this.sendNotification(
-      '💕 New Note from ' + partnerName,
+      `💕 New Note from ${partnerName}`,
       {
         body: `"${noteTitle}"`,
         tag: 'note-created',
@@ -255,20 +149,13 @@ class NotificationService {
 
   /**
    * Notify when partner updates a note
-   * @param {string} partnerName - Partner's username
-   * @param {string} noteTitle - Note title
    */
   async notifyNoteUpdated(partnerName, noteTitle) {
-    const enabled = localStorage.getItem('notify_note_updated') !== 'false' &&
-                    localStorage.getItem('notifyNoteUpdated') !== 'false'
-    if (!enabled) {
-      console.log('Note updated notification disabled')
-      return false
-    }
+    const enabled = localStorage.getItem('notify_note_updated') !== 'false'
+    if (!enabled) return false
 
-    console.log('Sending note updated notification:', partnerName, noteTitle)
     return await this.sendNotification(
-      '✏️ Note Updated by ' + partnerName,
+      `✏️ Note Updated by ${partnerName}`,
       {
         body: `"${noteTitle}"`,
         tag: 'note-updated',
@@ -279,20 +166,13 @@ class NotificationService {
 
   /**
    * Notify when partner likes a note
-   * @param {string} partnerName - Partner's username
-   * @param {string} noteTitle - Note title
    */
   async notifyNoteLiked(partnerName, noteTitle) {
-    const enabled = localStorage.getItem('notify_note_liked') !== 'false' &&
-                    localStorage.getItem('notifyNoteLiked') !== 'false'
-    if (!enabled) {
-      console.log('Note liked notification disabled')
-      return false
-    }
+    const enabled = localStorage.getItem('notify_note_liked') !== 'false'
+    if (!enabled) return false
 
-    console.log('Sending note liked notification:', partnerName, noteTitle)
     return await this.sendNotification(
-      '❤️ ' + partnerName + ' liked your note',
+      `❤️ ${partnerName} liked your note`,
       {
         body: `"${noteTitle}"`,
         tag: 'note-liked',
@@ -303,20 +183,13 @@ class NotificationService {
 
   /**
    * Notify when partner creates a journal entry
-   * @param {string} partnerName - Partner's username
-   * @param {string} date - Journal date
    */
   async notifyJournalCreated(partnerName, date) {
-    const enabled = localStorage.getItem('notify_journal_created') !== 'false' &&
-                    localStorage.getItem('notifyJournalCreated') !== 'false'
-    if (!enabled) {
-      console.log('Journal created notification disabled')
-      return false
-    }
+    const enabled = localStorage.getItem('notify_journal_created') !== 'false'
+    if (!enabled) return false
 
-    console.log('Sending journal created notification:', partnerName, date)
     return await this.sendNotification(
-      '📔 New Journal Entry from ' + partnerName,
+      `📔 New Journal Entry from ${partnerName}`,
       {
         body: `Entry for ${date}`,
         tag: 'journal-created',
@@ -327,20 +200,13 @@ class NotificationService {
 
   /**
    * Notify when partner updates a journal entry
-   * @param {string} partnerName - Partner's username
-   * @param {string} date - Journal date
    */
   async notifyJournalUpdated(partnerName, date) {
-    const enabled = localStorage.getItem('notify_journal_updated') !== 'false' &&
-                    localStorage.getItem('notifyJournalUpdated') !== 'false'
-    if (!enabled) {
-      console.log('Journal updated notification disabled')
-      return false
-    }
+    const enabled = localStorage.getItem('notify_journal_updated') !== 'false'
+    if (!enabled) return false
 
-    console.log('Sending journal updated notification:', partnerName, date)
     return await this.sendNotification(
-      '✏️ Journal Updated by ' + partnerName,
+      `✏️ Journal Updated by ${partnerName}`,
       {
         body: `Entry for ${date}`,
         tag: 'journal-updated',
@@ -353,14 +219,9 @@ class NotificationService {
    * Send nightly journal reminder
    */
   async sendJournalReminder() {
-    const enabled = localStorage.getItem('notify_journal_reminder') !== 'false' &&
-                    localStorage.getItem('notifyJournalReminder') !== 'false'
-    if (!enabled) {
-      console.log('Journal reminder disabled')
-      return false
-    }
+    const enabled = localStorage.getItem('notify_journal_reminder') !== 'false'
+    if (!enabled) return false
 
-    console.log('Sending journal reminder notification')
     return await this.sendNotification(
       '📔 Time to Write Your Journal',
       {
@@ -373,18 +234,12 @@ class NotificationService {
 
   /**
    * Schedule nightly journal reminder
-   * @param {string} time - Time in HH:MM format (24-hour)
    */
   scheduleJournalReminder(time = '21:00') {
-    // Clear existing reminder
     this.clearJournalReminder()
 
-    const enabled = localStorage.getItem('notify_journal_reminder') !== 'false' &&
-                    localStorage.getItem('notifyJournalReminder') !== 'false'
-    if (!enabled) {
-      console.log('Journal reminder scheduling disabled')
-      return
-    }
+    const enabled = localStorage.getItem('notify_journal_reminder') !== 'false'
+    if (!enabled) return
 
     const [hours, minutes] = time.split(':').map(Number)
     
@@ -393,7 +248,6 @@ class NotificationService {
       const reminderTime = new Date()
       reminderTime.setHours(hours, minutes, 0, 0)
 
-      // If time has passed today, schedule for tomorrow
       if (reminderTime <= now) {
         reminderTime.setDate(reminderTime.getDate() + 1)
       }
@@ -402,11 +256,8 @@ class NotificationService {
 
       this.reminderInterval = setTimeout(() => {
         this.sendJournalReminder()
-        // Schedule next reminder for tomorrow
         scheduleNext()
       }, msUntilReminder)
-
-      console.log(`Journal reminder scheduled for ${reminderTime.toLocaleString()}`)
     }
 
     scheduleNext()
@@ -424,62 +275,23 @@ class NotificationService {
 
   /**
    * Initialize notification service
-   * Loads preferences and schedules reminders
    */
   async initialize() {
-    // Check permission on load
     this.checkPermission()
-
-    // Load notification preferences from localStorage
-    // These will be synced from backend profile settings
     const reminderTime = localStorage.getItem('journal_reminder_time') || '21:00'
     
-    // Schedule reminder if enabled
     if (this.permission === 'granted') {
       this.scheduleJournalReminder(reminderTime)
     }
   }
 
   /**
-   * Test notification - for debugging
-   * Call this from browser console: notificationService.testNotification()
-   */
-  async testNotification() {
-    console.log('Testing notification...')
-    console.log('Permission:', Notification.permission)
-    console.log('Notifications enabled:', localStorage.getItem('notifications_enabled'))
-    
-    // Temporarily enable notifications for testing
-    const originalEnabled = localStorage.getItem('notifications_enabled')
-    localStorage.setItem('notifications_enabled', 'true')
-    
-    const result = await this.sendNotification('Test Notification', {
-      body: 'This is a test notification from Love Notes! 💕',
-      tag: 'test',
-      requireInteraction: false
-    })
-    
-    // Restore original setting
-    if (originalEnabled !== null) {
-      localStorage.setItem('notifications_enabled', originalEnabled)
-    } else {
-      localStorage.removeItem('notifications_enabled')
-    }
-    
-    console.log('Test notification result:', result)
-    return result
-  }
-
-  /**
    * Update notification preferences
-   * @param {object} preferences - Notification preferences object
    */
   updatePreferences(preferences) {
     Object.keys(preferences).forEach(key => {
       if (preferences[key] !== undefined) {
-        // Store both formats for compatibility
         localStorage.setItem(key, preferences[key].toString())
-        // Also store without underscore for backward compatibility
         if (key.includes('_')) {
           const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase())
           localStorage.setItem(camelKey, preferences[key].toString())
@@ -487,7 +299,6 @@ class NotificationService {
       }
     })
 
-    // Reschedule reminder if time changed
     if (preferences.journal_reminder_time) {
       this.scheduleJournalReminder(preferences.journal_reminder_time)
     } else if (preferences.notify_journal_reminder === false) {
@@ -503,4 +314,3 @@ class NotificationService {
 const notificationService = new NotificationService()
 
 export default notificationService
-

@@ -5,12 +5,15 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from django.db.models import Q
-from .models import User, Note, JournalEntry, PartnerRequest, UserProfile, NoteLike
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+from .models import User, Note, JournalEntry, PartnerRequest, UserProfile, NoteLike, PushSubscription
 from .serializers import (
     UserSerializer, RegisterSerializer, NoteSerializer,
     JournalEntrySerializer, PartnerRequestSerializer,
-    UserProfileSerializer, PartnerProfileSerializer
+    UserProfileSerializer, PartnerProfileSerializer, PushSubscriptionSerializer
 )
+import json
 
 
 class RegisterView(generics.CreateAPIView):
@@ -423,6 +426,49 @@ def profile_view(request):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def save_push_subscription(request):
+    """Save Web Push subscription for the user"""
+    try:
+        endpoint = request.data.get('endpoint')
+        keys = request.data.get('keys', {})
+        p256dh = keys.get('p256dh')
+        auth = keys.get('auth')
+        
+        if not endpoint or not p256dh or not auth:
+            return Response({'error': 'Missing subscription data'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        subscription, created = PushSubscription.objects.update_or_create(
+            user=request.user,
+            endpoint=endpoint,
+            defaults={
+                'p256dh': p256dh,
+                'auth': auth
+            }
+        )
+        
+        return Response({
+            'message': 'Subscription saved successfully',
+            'id': subscription.id
+        }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_push_subscription(request, subscription_id):
+    """Delete a push subscription"""
+    try:
+        subscription = PushSubscription.objects.get(id=subscription_id, user=request.user)
+        subscription.delete()
+        return Response({'message': 'Subscription deleted successfully'})
+    except PushSubscription.DoesNotExist:
+        return Response({'error': 'Subscription not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 @api_view(['GET'])
