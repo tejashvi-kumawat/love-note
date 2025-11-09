@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import HeartIcon from '../HeartIcon/HeartIcon'
+import AnimatedBackground from '../AnimatedBackground/AnimatedBackground'
 import './Auth.css'
 
 const Register = () => {
@@ -46,6 +47,7 @@ const Register = () => {
 
   return (
     <div className="auth-container">
+      <AnimatedBackground />
       <div className="auth-card">
         <div className="auth-header">
           <div className="auth-logo">
