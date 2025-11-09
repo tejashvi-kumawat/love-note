@@ -154,7 +154,8 @@ CORS_ALLOW_CREDENTIALS = True
 # Generate keys using: python generate_vapid_keys.py
 # Keys can be set via environment variables or .env file
 try:
-    from decouple import config
+    from decouple import config, Csv
+    # .env file should be in BASE_DIR (backend directory)
     VAPID_PUBLIC_KEY = config('VAPID_PUBLIC_KEY', default='')
     VAPID_PRIVATE_KEY = config('VAPID_PRIVATE_KEY', default='')
     VAPID_CLAIM_EMAIL = config('VAPID_CLAIM_EMAIL', default='mailto:admin@lovenotes.com')
@@ -163,4 +164,25 @@ except ImportError:
     VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
     VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
     VAPID_CLAIM_EMAIL = os.environ.get('VAPID_CLAIM_EMAIL', 'mailto:admin@lovenotes.com')
+
+# Debug: Check if keys are loaded (remove in production)
+if not VAPID_PUBLIC_KEY and DEBUG:
+    import os
+    env_path = BASE_DIR / '.env'
+    if env_path.exists():
+        print(f"⚠️  Warning: .env file exists at {env_path} but VAPID_PUBLIC_KEY is not loaded")
+        print(f"   Try reading .env file directly...")
+        try:
+            with open(env_path, 'r') as f:
+                for line in f:
+                    if 'VAPID_PUBLIC_KEY' in line and '=' in line:
+                        VAPID_PUBLIC_KEY = line.split('=', 1)[1].strip().strip('"').strip("'")
+                    elif 'VAPID_PRIVATE_KEY' in line and '=' in line:
+                        VAPID_PRIVATE_KEY = line.split('=', 1)[1].strip().strip('"').strip("'")
+                    elif 'VAPID_CLAIM_EMAIL' in line and '=' in line:
+                        VAPID_CLAIM_EMAIL = line.split('=', 1)[1].strip().strip('"').strip("'")
+            if VAPID_PUBLIC_KEY:
+                print(f"   ✅ Loaded keys from .env file directly")
+        except Exception as e:
+            print(f"   ❌ Error reading .env: {e}")
 
