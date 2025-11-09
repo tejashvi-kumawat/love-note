@@ -6,7 +6,7 @@
 }
 
 .dashboard-nav {
-  background: rgba(255, 240, 245, 0.7);
+  background: rgba(255, 255, 255, 0.6);
   padding: 20px 40px;
   box-shadow: 0 8px 32px rgba(233, 30, 99, 0.15);
   display: flex;
@@ -15,8 +15,8 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(20px) saturate(150%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 .nav-brand {

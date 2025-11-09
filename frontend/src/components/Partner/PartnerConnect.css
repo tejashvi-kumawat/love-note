@@ -7,7 +7,7 @@
 }
 
 .partner-card {
-  background: rgba(255, 240, 245, 0.7);
+  background: rgba(255, 255, 255, 0.5);
   border-radius: var(--border-radius);
   padding: 40px;
   max-width: 700px;
@@ -15,8 +15,8 @@
   box-shadow: 0 8px 32px rgba(233, 30, 99, 0.15);
   position: relative;
   overflow: hidden;
-  backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   z-index: 2;
 }
 
