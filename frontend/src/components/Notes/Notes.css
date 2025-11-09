@@ -543,27 +543,22 @@
   }
 
   .notes-sidebar {
-    min-height: calc(100vh - 150px);
     padding: 15px;
-    max-height: none;
+    height: auto;
+    max-height: 50vh; /* Reduced height on mobile */
   }
 
   .notes-list {
-    min-height: 200px;
-    max-height: 300px; /* Limit to show 2-3 cards on mobile */
+    min-height: 150px;
+    max-height: 250px; /* Limit to show 2 cards on mobile */
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
   
-  .notes-sidebar {
-    height: auto;
-    max-height: calc(100vh - 100px);
-  }
-  
   .notes-editor {
     height: auto;
-    max-height: calc(100vh - 100px);
-    min-height: 400px;
+    max-height: 50vh; /* Reduced height on mobile */
+    min-height: 300px;
   }
 
   .note-item {

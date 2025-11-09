@@ -738,15 +738,6 @@ const RichTextEditor = ({
           }}
         />
         <div className="editor-footer">
-          <div className="shared-toggle">
-            <input
-              type="checkbox"
-              id="shared-toggle"
-              checked={isShared}
-              onChange={(e) => setIsShared(e.target.checked)}
-            />
-            <label htmlFor="shared-toggle">Share with partner</label>
-          </div>
           <div className="editor-actions">
             <button onClick={onCancel} className="cancel-btn">
               Cancel

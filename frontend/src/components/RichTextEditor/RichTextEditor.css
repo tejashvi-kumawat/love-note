@@ -114,7 +114,8 @@
   display: flex;
   flex-direction: column;
   padding: 25px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
   position: relative;
 }
@@ -210,12 +211,17 @@
 
 .editor-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-top: 25px;
   padding-top: 20px;
   border-top: 2px solid #e2e8f0;
   flex-shrink: 0; /* Prevent footer from being hidden */
+  position: sticky;
+  bottom: 0;
+  background: rgba(255, 240, 245, 0.95);
+  backdrop-filter: blur(10px);
+  z-index: 10;
 }
 
 .shared-toggle {
@@ -483,28 +489,27 @@
   }
 
   .editor-footer {
-    flex-direction: column;
-    gap: 15px;
-    align-items: stretch;
-    margin-top: 20px;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 15px;
     padding-top: 15px;
+    padding-bottom: 10px;
   }
 
   .editor-actions {
-    width: 100%;
-    justify-content: stretch;
+    width: auto;
+    justify-content: flex-end;
+    gap: 10px;
   }
 
   .cancel-btn,
   .save-btn {
-    flex: 1;
-    padding: 14px 20px;
+    flex: 0 1 auto;
+    padding: 12px 20px;
     font-size: 0.95rem;
-  }
-
-  .shared-toggle {
-    justify-content: center;
-    width: 100%;
+    min-width: 100px;
   }
 
   .viewer-header {
