@@ -134,8 +134,10 @@ class UserProfile(models.Model):
     notify_note_created = models.BooleanField(default=True, help_text='Notify when partner creates a note')
     notify_note_updated = models.BooleanField(default=True, help_text='Notify when partner updates a note')
     notify_note_liked = models.BooleanField(default=True, help_text='Notify when partner likes a note')
+    notify_note_deletion_requested = models.BooleanField(default=True, help_text='Notify when partner requests to delete a note')
     notify_journal_created = models.BooleanField(default=True, help_text='Notify when partner creates a journal entry')
     notify_journal_updated = models.BooleanField(default=True, help_text='Notify when partner updates a journal entry')
+    notify_journal_deletion_requested = models.BooleanField(default=True, help_text='Notify when partner requests to delete a journal entry')
     notify_journal_reminder = models.BooleanField(default=True, help_text='Enable nightly journal reminder notifications')
     journal_reminder_time = models.TimeField(default='21:00:00', help_text='Time for nightly journal reminder (24-hour format)')
     

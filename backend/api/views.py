@@ -234,6 +234,25 @@ class NoteDetailView(generics.RetrieveUpdateDestroyAPIView):
         if not note.deletion_requested_by:
             note.deletion_requested_by = user
             note.save()
+            # Send notification to partner about deletion request
+            if note.author != user and note.author.partner == user:
+                # User is requesting deletion of partner's note
+                send_notification_to_partner(
+                    user,
+                    'note_deletion_requested',
+                    f'🗑️ {user.username} wants to delete a note',
+                    f'"{note.title}"',
+                    note_id=note.id
+                )
+            elif note.author == user and user.partner:
+                # User is requesting deletion of their own note (shared with partner)
+                send_notification_to_partner(
+                    user,
+                    'note_deletion_requested',
+                    f'🗑️ {user.username} wants to delete a note',
+                    f'"{note.title}"',
+                    note_id=note.id
+                )
             return Response({
                 'message': 'Deletion request sent. Waiting for partner approval.',
                 'deletion_requested': True
@@ -281,15 +300,17 @@ def toggle_note_like(request, note_id):
             like.delete()
             return Response({'message': 'Note unliked', 'is_liked': False})
         else:
-            # Like - send notification to note author
-            if note.author != user and note.author.partner == user:
-                send_notification_to_partner(
-                    user,
-                    'note_liked',
-                    f'❤️ {user.username} liked your note',
-                    f'"{note.title}"',
-                    note_id=note.id
-                )
+            # Like - send notification to note author if they are the partner
+            if note.author != user:
+                # User liked someone else's note - notify the author if they are partners
+                if user.partner == note.author or note.author.partner == user:
+                    send_notification_to_partner(
+                        user,
+                        'note_liked',
+                        f'❤️ {user.username} liked your note',
+                        f'"{note.title}"',
+                        note_id=note.id
+                    )
             return Response({'message': 'Note liked', 'is_liked': True})
             
     except Note.DoesNotExist:
@@ -418,6 +439,26 @@ class JournalEntryDetailView(generics.RetrieveUpdateDestroyAPIView):
         if not entry.deletion_requested_by:
             entry.deletion_requested_by = user
             entry.save()
+            # Send notification to partner about deletion request
+            date_str = entry.date.strftime('%Y-%m-%d')
+            if entry.author != user and entry.author.partner == user:
+                # User is requesting deletion of partner's journal entry
+                send_notification_to_partner(
+                    user,
+                    'journal_deletion_requested',
+                    f'🗑️ {user.username} wants to delete a journal entry',
+                    f'Entry for {date_str}',
+                    journal_date=date_str
+                )
+            elif entry.author == user and user.partner:
+                # User is requesting deletion of their own journal entry (shared with partner)
+                send_notification_to_partner(
+                    user,
+                    'journal_deletion_requested',
+                    f'🗑️ {user.username} wants to delete a journal entry',
+                    f'Entry for {date_str}',
+                    journal_date=date_str
+                )
             return Response({
                 'message': 'Deletion request sent. Waiting for partner approval.',
                 'deletion_requested': True

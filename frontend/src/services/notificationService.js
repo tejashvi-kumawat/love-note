@@ -399,8 +399,13 @@ class NotificationService {
     
     if (this.permission === 'granted') {
       this.scheduleJournalReminder(reminderTime)
-      // Subscribe to push notifications for background support
-      await this.subscribeToPush()
+      // Subscribe to push notifications for background support (Safari PWA)
+      // This enables notifications even when the app is closed
+      try {
+        await this.subscribeToPush()
+      } catch (error) {
+        // Push subscription failed, but continue with regular notifications
+      }
     }
   }
 

@@ -106,8 +106,10 @@ def send_notification_to_partner(user, notification_type, title, body, note_id=N
             'note_created': partner_profile.notify_note_created,
             'note_updated': partner_profile.notify_note_updated,
             'note_liked': partner_profile.notify_note_liked,
+            'note_deletion_requested': partner_profile.notify_note_deletion_requested,
             'journal_created': partner_profile.notify_journal_created,
             'journal_updated': partner_profile.notify_journal_updated,
+            'journal_deletion_requested': partner_profile.notify_journal_deletion_requested,
         }.get(notification_type, True)
         
         if not notification_enabled:
