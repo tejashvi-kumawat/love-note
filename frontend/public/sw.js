@@ -56,15 +56,28 @@ self.addEventListener('push', (event) => {
     icon: '/icon-192.svg',
     badge: '/icon-192.svg',
     tag: 'love-notes',
-    requireInteraction: false
+    requireInteraction: false,
+    vibrate: [200, 100, 200],
+    silent: false
   }
 
   if (event.data) {
     try {
       const data = event.data.json()
-      notificationData = { ...notificationData, ...data }
+      // Merge received data with defaults
+      notificationData = {
+        ...notificationData,
+        ...data,
+        // Ensure icon and badge are always set
+        icon: data.icon || '/icon-192.svg',
+        badge: data.badge || '/icon-192.svg'
+      }
     } catch (e) {
-      notificationData.body = event.data.text() || notificationData.body
+      // If JSON parsing fails, try text
+      const text = event.data.text()
+      if (text) {
+        notificationData.body = text
+      }
     }
   }
 

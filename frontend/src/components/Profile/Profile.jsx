@@ -158,6 +158,12 @@ const Profile = () => {
         ...prev,
         notifications_enabled: true
       }))
+      // Subscribe to push notifications for background support
+      try {
+        await notificationService.subscribeToPush()
+      } catch (error) {
+        // Push subscription failed, but continue
+      }
     }
   }
 
@@ -179,6 +185,15 @@ const Profile = () => {
       
       // Update notification service preferences
       notificationService.updatePreferences(notificationSettings)
+      
+      // If notifications are enabled, ensure push subscription is active
+      if (notificationSettings.notifications_enabled && notificationPermission === 'granted') {
+        try {
+          await notificationService.subscribeToPush()
+        } catch (error) {
+          // Push subscription failed, but continue
+        }
+      }
       
       setSuccess('Notification settings saved successfully!')
       await fetchProfile()

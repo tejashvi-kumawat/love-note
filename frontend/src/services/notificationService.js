@@ -412,7 +412,7 @@ class NotificationService {
   /**
    * Update notification preferences
    */
-  updatePreferences(preferences) {
+  async updatePreferences(preferences) {
     Object.keys(preferences).forEach(key => {
       if (preferences[key] !== undefined) {
         localStorage.setItem(key, preferences[key].toString())
@@ -422,6 +422,15 @@ class NotificationService {
         }
       }
     })
+
+    // If notifications are enabled and permission is granted, ensure push subscription
+    if (preferences.notifications_enabled && this.permission === 'granted') {
+      try {
+        await this.subscribeToPush()
+      } catch (error) {
+        // Push subscription failed, but continue
+      }
+    }
 
     if (preferences.journal_reminder_time) {
       this.scheduleJournalReminder(preferences.journal_reminder_time)

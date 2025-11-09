@@ -47,6 +47,8 @@ def send_push_notification(subscription, title, body, data=None):
             "sub": settings.VAPID_CLAIM_EMAIL
         }
         
+        # Create notification payload
+        # For Safari/Chrome compatibility, we send the payload as JSON string
         payload = {
             "title": title,
             "body": body,
@@ -59,11 +61,13 @@ def send_push_notification(subscription, title, body, data=None):
         if data:
             payload["data"] = data
         
+        # Send push notification
         webpush(
             subscription_info=subscription_info,
             data=json.dumps(payload),
             vapid_private_key=settings.VAPID_PRIVATE_KEY,
-            vapid_claims=vapid_claims
+            vapid_claims=vapid_claims,
+            ttl=86400  # 24 hours TTL for push notifications
         )
         
         logger.info(f'Push notification sent successfully to {subscription.user.username}')
