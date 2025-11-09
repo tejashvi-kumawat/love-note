@@ -292,24 +292,15 @@ def toggle_note_like(request, note_id):
             like.delete()
             return Response({'message': 'Note unliked', 'is_liked': False})
         else:
-            # Like - send notification to note author if they are partners
-            if note.author != user:
-                # Check if users are partners (bidirectional check)
-                are_partners = (
-                    (user.partner and user.partner == note.author) or
-                    (note.author.partner and note.author.partner == user)
+            # Like - send notification to partner (same as note creation)
+            if note.author != user and user.partner:
+                send_notification_to_partner(
+                    user,  # Trigger user (who liked)
+                    'note_liked',
+                    f'❤️ {user.username} liked your note',
+                    f'"{note.title}"',
+                    note_id=note.id
                 )
-                if are_partners:
-                    # Send notification to note author (not user.partner)
-                    # When user A likes user B's note, notify user B
-                    send_notification_to_partner(
-                        user,  # Trigger user (who liked)
-                        'note_liked',
-                        f'❤️ {user.username} liked your note',
-                        f'"{note.title}"',
-                        note_id=note.id,
-                        recipient_user=note.author  # Send to note author (who created the note)
-                    )
             return Response({'message': 'Note liked', 'is_liked': True})
             
     except Note.DoesNotExist:
