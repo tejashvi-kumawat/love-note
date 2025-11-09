@@ -27,7 +27,8 @@ def _convert_vapid_private_key(base64url_key):
     """
     try:
         # Add padding if needed
-        padding = '=' * (4 - len(base64url_key) % 4) % 4
+        padding_length = (4 - len(base64url_key) % 4) % 4
+        padding = '=' * padding_length
         base64_key = (base64url_key + padding).replace('-', '+').replace('_', '/')
         
         # Decode base64 to get raw 32-byte private key
