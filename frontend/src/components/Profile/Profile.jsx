@@ -392,33 +392,71 @@ const Profile = () => {
           <div className="form-section">
             <h3>Notifications</h3>
             <div className="notification-info">
-              {notificationPermission === 'unsupported' && (
-                <div className="info-message">
-                  Your browser does not support notifications.
-                </div>
-              )}
-              {notificationPermission === 'default' && (
-                <div className="info-message">
-                  Enable notifications to receive updates from your partner and reminders.
-                  <button 
-                    type="button" 
-                    className="enable-notifications-btn"
-                    onClick={handleRequestPermission}
-                  >
-                    Enable Notifications
-                  </button>
-                </div>
-              )}
-              {notificationPermission === 'denied' && (
-                <div className="error-message">
-                  Notifications are blocked. Please enable them in your browser settings.
-                </div>
-              )}
-              {notificationPermission === 'granted' && (
-                <div className="success-message">
-                  ✓ Notifications are enabled
-                </div>
-              )}
+              {(() => {
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
+                const isStandalone = (window.navigator.standalone === true) || 
+                                    (window.matchMedia('(display-mode: standalone)').matches)
+                
+                if (isIOS && !isStandalone) {
+                  return (
+                    <div className="info-message" style={{ backgroundColor: '#fff3cd', padding: '15px', borderRadius: '8px', marginBottom: '15px' }}>
+                      <strong>📱 iPhone Users:</strong> For background notifications to work on iPhone, you need to add this app to your home screen:
+                      <ol style={{ marginTop: '10px', paddingLeft: '20px' }}>
+                        <li>Tap the Share button (square with arrow) at the bottom</li>
+                        <li>Scroll down and tap "Add to Home Screen"</li>
+                        <li>Open the app from your home screen</li>
+                        <li>Then enable notifications here</li>
+                      </ol>
+                    </div>
+                  )
+                }
+                
+                if (notificationPermission === 'unsupported') {
+                  return (
+                    <div className="info-message">
+                      Your browser does not support notifications.
+                    </div>
+                  )
+                }
+                
+                if (notificationPermission === 'default') {
+                  return (
+                    <div className="info-message">
+                      Enable notifications to receive updates from your partner and reminders.
+                      <button 
+                        type="button" 
+                        className="enable-notifications-btn"
+                        onClick={handleRequestPermission}
+                      >
+                        Enable Notifications
+                      </button>
+                    </div>
+                  )
+                }
+                
+                if (notificationPermission === 'denied') {
+                  return (
+                    <div className="error-message">
+                      Notifications are blocked. Please enable them in your browser settings.
+                    </div>
+                  )
+                }
+                
+                if (notificationPermission === 'granted') {
+                  return (
+                    <div className="success-message">
+                      ✓ Notifications are enabled
+                      {isIOS && isStandalone && (
+                        <div style={{ marginTop: '5px', fontSize: '0.9em' }}>
+                          ✓ App is added to home screen - background notifications will work!
+                        </div>
+                      )}
+                    </div>
+                  )
+                }
+                
+                return null
+              })()}
             </div>
 
             <div className="form-group">

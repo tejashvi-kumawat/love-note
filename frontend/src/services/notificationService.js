@@ -22,6 +22,17 @@ class NotificationService {
     return /safari/.test(ua) && !/chrome/.test(ua) && !/chromium/.test(ua)
   }
 
+  isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
+  }
+
+  isStandalone() {
+    // Check if app is running in standalone mode (PWA)
+    return (window.navigator.standalone === true) || 
+           (window.matchMedia('(display-mode: standalone)').matches) ||
+           (document.referrer.includes('android-app://'))
+  }
+
   /**
    * Check current notification permission status
    */
@@ -278,12 +289,23 @@ class NotificationService {
    * Subscribe to Web Push API for background notifications
    */
   async subscribeToPush() {
+    // iOS Safari requires the app to be added to home screen (PWA mode)
+    if (this.isIOS() && !this.isStandalone()) {
+      // On iOS, push notifications only work in standalone mode
+      // Return null but don't throw error - user needs to add to home screen
+      return null
+    }
+
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       return null
     }
 
     try {
-      const registration = await navigator.serviceWorker.ready
+      // Wait for service worker to be ready (with timeout)
+      const registration = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('SW timeout')), 5000))
+      ])
       
       // Check if already subscribed
       let subscription = await registration.pushManager.getSubscription()
@@ -310,6 +332,10 @@ class NotificationService {
         }
         
         const { publicKey } = await response.json()
+        
+        if (!publicKey) {
+          return null
+        }
         
         // Convert base64url to Uint8Array
         const applicationServerKey = this.urlBase64ToUint8Array(publicKey)
