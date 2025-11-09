@@ -303,6 +303,60 @@ const RichTextEditor = ({
     setContent(editorRef.current.innerHTML)
   }
 
+  const changeTextColor = (color) => {
+    if (!editorRef.current) return
+    
+    const selection = window.getSelection()
+    if (selection.rangeCount === 0) return
+    
+    const range = selection.getRangeAt(0)
+    
+    // If there's selected text, apply color to it
+    if (!range.collapsed) {
+      document.execCommand('foreColor', false, color)
+      editorRef.current.focus()
+      setContent(editorRef.current.innerHTML)
+      return
+    }
+    
+    // If cursor is at a position (no selection), create a span with the color
+    // This ensures future typing will use this color
+    const span = document.createElement('span')
+    span.style.color = color
+    span.textContent = '\u200B' // Zero-width space to maintain cursor position
+    
+    try {
+      range.insertNode(span)
+      // Move cursor after the span
+      range.setStartAfter(span)
+      range.setEndAfter(span)
+      selection.removeAllRanges()
+      selection.addRange(range)
+    } catch (e) {
+      // Fallback: use execCommand
+      document.execCommand('foreColor', false, color)
+    }
+    
+    editorRef.current.focus()
+    setContent(editorRef.current.innerHTML)
+    
+    // Clean up zero-width spaces after typing
+    setTimeout(() => {
+      if (editorRef.current) {
+        const zeroWidthSpaces = editorRef.current.querySelectorAll('span:has-text("\u200B")')
+        zeroWidthSpaces.forEach(span => {
+          if (span.textContent === '\u200B' && span.children.length === 0) {
+            const parent = span.parentNode
+            if (parent) {
+              parent.removeChild(span)
+              parent.normalize()
+            }
+          }
+        })
+      }
+    }, 100)
+  }
+
   const changeLineHeight = (lineHeight) => {
     if (!editorRef.current) return
     
@@ -412,6 +466,18 @@ const RichTextEditor = ({
           node = node.parentNode
         }
       }
+      
+      // Clean up zero-width spaces that might have been left from color changes
+      const zeroWidthSpans = editorRef.current.querySelectorAll('span')
+      zeroWidthSpans.forEach(span => {
+        if (span.textContent === '\u200B' && span.children.length === 0) {
+          const parent = span.parentNode
+          if (parent) {
+            parent.removeChild(span)
+            parent.normalize()
+          }
+        }
+      })
     }
     
     setContent(e.target.innerHTML)
@@ -635,12 +701,7 @@ const RichTextEditor = ({
             onFocus={saveCursorPosition}
             onMouseDown={saveCursorPosition}
             onChange={(e) => {
-              executeCommand('foreColor', e.target.value)
-              // Restore cursor position after color is applied
-              setTimeout(() => {
-                restoreCursorPosition()
-                editorRef.current?.focus()
-              }, 10)
+              changeTextColor(e.target.value)
             }}
             className="color-picker"
             title="Text Color"
