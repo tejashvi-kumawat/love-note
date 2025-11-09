@@ -524,14 +524,17 @@
   }
 
   .notes-sidebar {
-    max-height: none;
-    min-height: calc(100vh - 200px);
+    max-height: 500px;
     height: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   .notes-list {
-    min-height: 300px;
-    max-height: calc(100vh - 400px);
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
   }
 }
 
@@ -545,19 +548,23 @@
   .notes-sidebar {
     padding: 15px;
     height: auto;
-    max-height: 50vh; /* Reduced height on mobile */
+    max-height: 400px; /* Reduced overall sidebar height on mobile */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   .notes-list {
-    min-height: 150px;
-    max-height: 250px; /* Limit to show 2 cards on mobile */
+    flex: 1;
+    min-height: 0;
+    max-height: none; /* Let it take available space */
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
   
   .notes-editor {
     height: auto;
-    max-height: 50vh; /* Reduced height on mobile */
+    max-height: calc(100vh - 100px);
     min-height: 300px;
   }
 
