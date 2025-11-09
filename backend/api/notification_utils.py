@@ -13,6 +13,7 @@ try:
     from pywebpush import webpush, WebPushException
     from cryptography.hazmat.primitives.asymmetric import ec
     from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.backends import default_backend
     WEBPUSH_AVAILABLE = True
 except ImportError:
     WEBPUSH_AVAILABLE = False
@@ -21,7 +22,7 @@ except ImportError:
 
 def _convert_vapid_private_key(base64url_key):
     """
-    Convert VAPID private key from base64url string to cryptography object
+    Convert VAPID private key from base64url string to PEM format
     that pywebpush can use
     """
     try:
@@ -32,13 +33,16 @@ def _convert_vapid_private_key(base64url_key):
         # Decode base64 to get raw 32-byte private key
         private_key_bytes = base64.b64decode(base64_key)
         
-        # Convert to integer
+        # Convert to integer (private scalar)
         private_key_int = int.from_bytes(private_key_bytes, 'big')
         
-        # Create EC private key from private numbers
+        # Create EC private key using SECP256R1 curve
         curve = ec.SECP256R1()
-        private_numbers = ec.EllipticCurvePrivateNumbers(private_key_int, ec.EllipticCurvePublicNumbers(0, 0, curve))
-        private_key = private_numbers.private_key(curve)
+        backend = default_backend()
+        
+        # Create private key using derive_private_key
+        # This is the correct way to create a private key from raw integer
+        private_key = ec.derive_private_key(private_key_int, curve, backend)
         
         # Serialize to PEM format (what pywebpush expects)
         pem_key = private_key.private_bytes(
@@ -49,7 +53,7 @@ def _convert_vapid_private_key(base64url_key):
         
         return pem_key.decode('utf-8')
     except Exception as e:
-        logger.error(f'Error converting VAPID private key: {e}')
+        logger.error(f'Error converting VAPID private key: {e}', exc_info=True)
         raise
 
 
