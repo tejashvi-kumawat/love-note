@@ -101,6 +101,26 @@ const Notes = () => {
     }
   }
 
+  const handleToggleLike = async (noteId, e) => {
+    e.stopPropagation()
+    try {
+      const response = await axios.post(`/api/notes/${noteId}/like/`)
+      // Refresh notes to get updated like status
+      await fetchNotes()
+      // Update selected note if it's the one being liked
+      if (selectedNote?.id === noteId) {
+        const updatedNotes = await axios.get('/api/notes/')
+        const updatedNote = updatedNotes.data.find(n => n.id === noteId)
+        if (updatedNote) {
+          setSelectedNote(updatedNote)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to toggle like:', error)
+      alert(error.response?.data?.error || 'Failed to toggle like')
+    }
+  }
+
   const handleDeleteNote = async (noteId, e) => {
     e.stopPropagation()
     const note = notes.find(n => n.id === noteId)
@@ -358,8 +378,33 @@ const Notes = () => {
                   </div>
                 )}
                 <div className="note-meta">
-                  <span>{new Date(note.updated_at).toLocaleDateString()}</span>
+                  <div className="note-meta-left">
+                    <span>{new Date(note.updated_at).toLocaleDateString()}</span>
+                    {note.like_count > 0 && (
+                      <div className="note-likes-info">
+                        <HeartIcon size="small" filled={note.is_liked_by_current_user} />
+                        <span>{note.like_count}</span>
+                        {note.likes && note.likes.length > 0 && (
+                          <span className="liked-by">
+                            {note.likes.map((like, idx) => (
+                              <span key={like.id}>
+                                {like.user.username}
+                                {idx < note.likes.length - 1 ? ', ' : ''}
+                              </span>
+                            ))}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   <div className="note-actions" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={(e) => handleToggleLike(note.id, e)}
+                      className={`like-btn ${note.is_liked_by_current_user ? 'liked' : ''}`}
+                      title={note.is_liked_by_current_user ? "Unlike" : "Like"}
+                    >
+                      <HeartIcon size="small" filled={note.is_liked_by_current_user} />
+                    </button>
                     {note.edit_requested_by && note.edit_requested_by.id !== note.author?.id && (
                       <button
                         onClick={(e) => handleApproveEdit(note, e)}
@@ -424,6 +469,26 @@ const Notes = () => {
               setIsEditing(false)
               if (!selectedNote.id) {
                 setSelectedNote(null)
+              }
+            }}
+            noteId={selectedNote.id}
+            isLiked={selectedNote.is_liked_by_current_user}
+            likeCount={selectedNote.like_count || 0}
+            likes={selectedNote.likes || []}
+            onToggleLike={async (noteId) => {
+              try {
+                await axios.post(`/api/notes/${noteId}/like/`)
+                await fetchNotes()
+                if (selectedNote?.id === noteId) {
+                  const updatedNotes = await axios.get('/api/notes/')
+                  const updatedNote = updatedNotes.data.find(n => n.id === noteId)
+                  if (updatedNote) {
+                    setSelectedNote(updatedNote)
+                  }
+                }
+              } catch (error) {
+                console.error('Failed to toggle like:', error)
+                alert(error.response?.data?.error || 'Failed to toggle like')
               }
             }}
           />

@@ -13,6 +13,7 @@ urlpatterns = [
     
     path('notes/', views.NoteListCreateView.as_view(), name='note-list-create'),
     path('notes/<int:pk>/', views.NoteDetailView.as_view(), name='note-detail'),
+    path('notes/<int:note_id>/like/', views.toggle_note_like, name='note-like'),
     
     path('journal/', views.JournalEntryListCreateView.as_view(), name='journal-list-create'),
     path('journal/<int:pk>/', views.JournalEntryDetailView.as_view(), name='journal-detail'),

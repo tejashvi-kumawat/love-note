@@ -10,6 +10,11 @@ const RichTextEditor = ({
   onEdit,
   onSave,
   onCancel,
+  noteId = null,
+  isLiked = false,
+  likeCount = 0,
+  likes = [],
+  onToggleLike = null,
 }) => {
   const [title, setTitle] = useState(initialTitle)
   const [content, setContent] = useState(initialContent)
@@ -457,12 +462,40 @@ const RichTextEditor = ({
     onSave(title, htmlContent, true)
   }
 
+  const handleLikeClick = async () => {
+    if (noteId && onToggleLike) {
+      await onToggleLike(noteId)
+    }
+  }
+
   if (!isEditing) {
     return (
       <div className="rich-text-viewer">
         <div className="viewer-header">
           <h1>{title || 'Untitled'}</h1>
           <div className="viewer-actions">
+            {noteId && (
+              <div className="viewer-like-section">
+                <button 
+                  onClick={handleLikeClick} 
+                  className={`viewer-like-btn ${isLiked ? 'liked' : ''}`}
+                  title={isLiked ? "Unlike" : "Like"}
+                >
+                  <HeartIcon size="small" filled={isLiked} />
+                  {likeCount > 0 && <span>{likeCount}</span>}
+                </button>
+                {likes && likes.length > 0 && (
+                  <span className="viewer-liked-by">
+                    {likes.map((like, idx) => (
+                      <span key={like.id}>
+                        {like.user.username}
+                        {idx < likes.length - 1 ? ', ' : ''}
+                      </span>
+                    ))}
+                  </span>
+                )}
+              </div>
+            )}
             <button onClick={onEdit} className="edit-btn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -599,7 +632,16 @@ const RichTextEditor = ({
           </select>
           <input
             type="color"
-            onChange={(e) => executeCommand('foreColor', e.target.value)}
+            onFocus={saveCursorPosition}
+            onMouseDown={saveCursorPosition}
+            onChange={(e) => {
+              executeCommand('foreColor', e.target.value)
+              // Restore cursor position after color is applied
+              setTimeout(() => {
+                restoreCursorPosition()
+                editorRef.current?.focus()
+              }, 10)
+            }}
             className="color-picker"
             title="Text Color"
           />

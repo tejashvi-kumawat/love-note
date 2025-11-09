@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from django.db.models import Q
-from .models import User, Note, JournalEntry, PartnerRequest, UserProfile
+from .models import User, Note, JournalEntry, PartnerRequest, UserProfile, NoteLike
 from .serializers import (
     UserSerializer, RegisterSerializer, NoteSerializer,
     JournalEntrySerializer, PartnerRequestSerializer,
@@ -102,6 +102,7 @@ class NoteListCreateView(generics.ListCreateAPIView):
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
+        context['request'] = self.request
         search_type = self.request.query_params.get('search_type', 'both')
         search_query = self.request.query_params.get('search', '')
         context['search_type'] = search_type
@@ -230,6 +231,39 @@ class NoteDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Response({'message': 'Note deleted successfully'})
         
         return Response({'error': 'Invalid deletion request'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def toggle_note_like(request, note_id):
+    """Like or unlike a note"""
+    try:
+        note = Note.objects.get(id=note_id)
+        user = request.user
+        
+        # Check if user has access to this note
+        if note.author != user and (not user.partner or note.author != user.partner):
+            return Response({'error': 'You do not have permission to like this note'}, 
+                          status=status.HTTP_403_FORBIDDEN)
+        
+        # Check if already liked
+        like, created = NoteLike.objects.get_or_create(note=note, user=user)
+        
+        if not created:
+            # Unlike - delete the like
+            like.delete()
+            return Response({'message': 'Note unliked', 'is_liked': False})
+        else:
+            # Like - return success
+            return Response({'message': 'Note liked', 'is_liked': True})
+            
+    except Note.DoesNotExist:
+        return Response({'error': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class JournalEntryListCreateView(generics.ListCreateAPIView):

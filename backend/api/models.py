@@ -44,6 +44,19 @@ class Note(models.Model):
         return self.title
 
 
+class NoteLike(models.Model):
+    note = models.ForeignKey(Note, on_delete=models.CASCADE, related_name='likes')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='note_likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['note', 'user']
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.username} likes {self.note.title}"
+
+
 class JournalEntry(models.Model):
     title = models.CharField(max_length=200, blank=True)
     content = models.TextField()

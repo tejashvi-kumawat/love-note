@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
-from .models import User, Note, JournalEntry, PartnerRequest, UserProfile
+from .models import User, Note, JournalEntry, PartnerRequest, UserProfile, NoteLike
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -45,19 +45,40 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
+class NoteLikeSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    
+    class Meta:
+        model = NoteLike
+        fields = ('id', 'user', 'created_at')
+        read_only_fields = ('user', 'created_at')
+
+
 class NoteSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     deletion_requested_by = UserSerializer(read_only=True)
     deletion_approved_by = UserSerializer(read_only=True)
     edit_requested_by = UserSerializer(read_only=True)
     edit_approved_by = UserSerializer(read_only=True)
+    likes = NoteLikeSerializer(many=True, read_only=True)
+    like_count = serializers.SerializerMethodField()
+    is_liked_by_current_user = serializers.SerializerMethodField()
     
     class Meta:
         model = Note
         fields = ('id', 'title', 'content', 'author', 'created_at', 'updated_at', 'is_shared', 
                   'deletion_requested_by', 'deletion_approved_by', 'edit_requested_by', 'edit_approved_by',
-                  'pending_title', 'pending_content')
+                  'pending_title', 'pending_content', 'likes', 'like_count', 'is_liked_by_current_user')
         read_only_fields = ('author', 'created_at', 'updated_at')
+    
+    def get_like_count(self, obj):
+        return obj.likes.count()
+    
+    def get_is_liked_by_current_user(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(user=request.user).exists()
+        return False
 
 
 class JournalEntrySerializer(serializers.ModelSerializer):
