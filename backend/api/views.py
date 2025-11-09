@@ -241,12 +241,14 @@ class NoteDetailView(generics.RetrieveUpdateDestroyAPIView):
                 (note.author.partner and note.author.partner == user)
             )
             if are_partners:
+                # Send notification to note author (the one who will approve/reject)
                 send_notification_to_partner(
-                    user,
+                    user,  # Trigger user
                     'note_deletion_requested',
                     f'🗑️ {user.username} wants to delete a note',
                     f'"{note.title}"',
-                    note_id=note.id
+                    note_id=note.id,
+                    recipient_user=note.author  # Send to note author
                 )
             return Response({
                 'message': 'Deletion request sent. Waiting for partner approval.',
@@ -303,12 +305,15 @@ def toggle_note_like(request, note_id):
                     (note.author.partner and note.author.partner == user)
                 )
                 if are_partners:
+                    # Send notification to note author
+                    # recipient_user parameter tells function to send to note.author instead of user.partner
                     send_notification_to_partner(
-                        user,
+                        user,  # Trigger user
                         'note_liked',
                         f'❤️ {user.username} liked your note',
                         f'"{note.title}"',
-                        note_id=note.id
+                        note_id=note.id,
+                        recipient_user=note.author  # Send to note author
                     )
             return Response({'message': 'Note liked', 'is_liked': True})
             
@@ -446,12 +451,14 @@ class JournalEntryDetailView(generics.RetrieveUpdateDestroyAPIView):
                 (entry.author.partner and entry.author.partner == user)
             )
             if are_partners:
+                # Send notification to journal entry author
                 send_notification_to_partner(
-                    user,
+                    user,  # Trigger user
                     'journal_deletion_requested',
                     f'🗑️ {user.username} wants to delete a journal entry',
                     f'Entry for {date_str}',
-                    journal_date=date_str
+                    journal_date=date_str,
+                    recipient_user=entry.author  # Send to entry author
                 )
             return Response({
                 'message': 'Deletion request sent. Waiting for partner approval.',

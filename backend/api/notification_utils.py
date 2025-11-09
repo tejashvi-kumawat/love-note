@@ -160,23 +160,27 @@ def send_push_notification(subscription, title, body, data=None):
         return False
 
 
-def send_notification_to_partner(user, notification_type, title, body, note_id=None, journal_date=None):
+def send_notification_to_partner(user, notification_type, title, body, note_id=None, journal_date=None, recipient_user=None):
     """
     Send notification to user's partner if they have notifications enabled
     
     Args:
-        user: User who triggered the notification (author)
+        user: User who triggered the notification (author) - used to find partner
         notification_type: Type of notification ('note_created', 'note_updated', 'note_liked', 'journal_created', 'journal_updated')
         title: Notification title
         body: Notification body
         note_id: Optional note ID
         journal_date: Optional journal date
+        recipient_user: Optional - if provided, send to this user instead of user.partner
     """
-    if not user.partner:
+    # If recipient_user is provided, use it; otherwise use user.partner
+    target_user = recipient_user if recipient_user else user.partner
+    
+    if not target_user:
         return
     
     try:
-        partner_profile = UserProfile.objects.filter(user=user.partner).first()
+        partner_profile = UserProfile.objects.filter(user=target_user).first()
         if not partner_profile or not partner_profile.notifications_enabled:
             return
         
@@ -194,8 +198,8 @@ def send_notification_to_partner(user, notification_type, title, body, note_id=N
         if not notification_enabled:
             return
         
-        # Get partner's push subscriptions
-        subscriptions = PushSubscription.objects.filter(user=user.partner)
+        # Get target user's push subscriptions
+        subscriptions = PushSubscription.objects.filter(user=target_user)
         
         # Send push notification to all subscriptions if they exist
         if subscriptions.exists():
@@ -210,9 +214,9 @@ def send_notification_to_partner(user, notification_type, title, body, note_id=N
                 if send_push_notification(subscription, title, body, data):
                     sent_count += 1
             
-            logger.info(f'Notification "{title}" sent to {sent_count}/{subscriptions.count()} subscriptions for {user.partner.username}')
+            logger.info(f'Notification "{title}" sent to {sent_count}/{subscriptions.count()} subscriptions for {target_user.username}')
         else:
-            logger.warning(f'No push subscriptions found for {user.partner.username}. Notification "{title}" not sent.')
+            logger.warning(f'No push subscriptions found for {target_user.username}. Notification "{title}" not sent.')
         
     except Exception as e:
         logger.error(f'Error sending notification to partner: {e}', exc_info=True)
