@@ -122,17 +122,23 @@ def send_notification_to_partner(user, notification_type, title, body, note_id=N
         # Get partner's push subscriptions
         subscriptions = PushSubscription.objects.filter(user=user.partner)
         
+        # Send push notification to all subscriptions if they exist
         if subscriptions.exists():
-            # Send push notification to all subscriptions
             data = {}
             if note_id:
                 data['note_id'] = note_id
             if journal_date:
                 data['journal_date'] = journal_date
             
+            sent_count = 0
             for subscription in subscriptions:
-                send_push_notification(subscription, title, body, data)
+                if send_push_notification(subscription, title, body, data):
+                    sent_count += 1
+            
+            logger.info(f'Notification "{title}" sent to {sent_count}/{subscriptions.count()} subscriptions for {user.partner.username}')
+        else:
+            logger.warning(f'No push subscriptions found for {user.partner.username}. Notification "{title}" not sent.')
         
     except Exception as e:
-        logger.error(f'Error sending notification to partner: {e}')
+        logger.error(f'Error sending notification to partner: {e}', exc_info=True)
 
