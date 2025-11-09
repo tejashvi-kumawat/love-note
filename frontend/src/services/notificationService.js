@@ -288,8 +288,23 @@ class NotificationService {
       let subscription = await registration.pushManager.getSubscription()
       
       if (!subscription) {
+        // Get API base URL from config
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
+          (import.meta.env.PROD ? 'https://lovenotes.pythonanywhere.com' : 'http://localhost:8000')
+        
+        // Get auth token
+        const token = localStorage.getItem('token')
+        if (!token) {
+          return null
+        }
+        
         // Request VAPID public key from backend
-        const response = await fetch('/api/push/vapid-public-key/')
+        const response = await fetch(`${API_BASE_URL}/api/push/vapid-public-key/`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        
         if (!response.ok) {
           console.log('VAPID key not available, skipping push subscription')
           return null
@@ -308,6 +323,10 @@ class NotificationService {
       }
 
       // Send subscription to backend
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
+        (import.meta.env.PROD ? 'https://lovenotes.pythonanywhere.com' : 'http://localhost:8000')
+      const token = localStorage.getItem('token')
+      
       const subData = {
         endpoint: subscription.endpoint,
         keys: {
@@ -316,10 +335,11 @@ class NotificationService {
         }
       }
 
-      await fetch('/api/push/subscribe/', {
+      await fetch(`${API_BASE_URL}/api/push/subscribe/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(subData)
       })
