@@ -353,20 +353,28 @@ class NotificationService {
   }
 
   /**
-   * Convert base64url to Uint8Array
+   * Convert base64url to Uint8Array for VAPID public key
+   * VAPID public key should be 65 bytes (uncompressed point: 0x04 + 64 bytes)
+   * But we store it as 64 bytes, so we need to add the 0x04 prefix
    */
   urlBase64ToUint8Array(base64String) {
+    // Add padding if needed
     const padding = '='.repeat((4 - base64String.length % 4) % 4)
     const base64 = (base64String + padding)
       .replace(/\-/g, '+')
       .replace(/_/g, '/')
 
     const rawData = window.atob(base64)
-    const outputArray = new Uint8Array(rawData.length)
-
+    
+    // VAPID public key should be 65 bytes (0x04 + 64 bytes for uncompressed point)
+    // But our key is 64 bytes, so we need to add 0x04 prefix
+    const outputArray = new Uint8Array(65)
+    outputArray[0] = 0x04 // Uncompressed point indicator
+    
     for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i)
+      outputArray[i + 1] = rawData.charCodeAt(i)
     }
+    
     return outputArray
   }
 
