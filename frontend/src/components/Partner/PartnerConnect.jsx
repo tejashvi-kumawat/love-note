@@ -41,7 +41,7 @@ const PartnerConnect = () => {
       setPartnerProfile(response.data)
     } catch (error) {
       if (error.response?.status !== 404) {
-        console.error('Failed to fetch partner profile:', error)
+        // Error handled silently('Failed to fetch partner profile:', error)
       }
       setPartnerProfile(null)
     } finally {

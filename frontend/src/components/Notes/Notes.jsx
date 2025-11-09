@@ -29,7 +29,7 @@ const Notes = () => {
       const response = await axios.get(url)
       setNotes(response.data)
     } catch (error) {
-      console.error('Failed to fetch notes:', error)
+      // Error handled silently('Failed to fetch notes:', error)
     } finally {
       setLoading(false)
     }
@@ -141,7 +141,7 @@ const Notes = () => {
       // Select the newly created/updated note
       setSelectedNote(savedNote)
     } catch (error) {
-      console.error('Failed to save note:', error)
+      // Error handled silently('Failed to save note:', error)
       const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to save note'
       alert(errorMsg)
     }
@@ -175,7 +175,7 @@ const Notes = () => {
         }
       }
     } catch (error) {
-      console.error('Failed to toggle like:', error)
+      // Error handled silently('Failed to toggle like:', error)
       alert(error.response?.data?.error || 'Failed to toggle like')
     }
   }
@@ -210,7 +210,7 @@ const Notes = () => {
         setIsEditing(false)
       }
     } catch (error) {
-      console.error('Failed to delete note:', error)
+      // Error handled silently('Failed to delete note:', error)
       alert(error.response?.data?.error || 'Failed to delete note')
     }
   }
@@ -267,7 +267,7 @@ const Notes = () => {
         setSelectedNote(response.data)
       }
     } catch (error) {
-      console.error('Failed to approve edit:', error)
+      // Error handled silently('Failed to approve edit:', error)
       alert(error.response?.data?.error || 'Failed to approve edit')
     }
   }
@@ -557,7 +557,7 @@ const Notes = () => {
                   }
                 }
               } catch (error) {
-                console.error('Failed to toggle like:', error)
+                // Error handled silently('Failed to toggle like:', error)
                 alert(error.response?.data?.error || 'Failed to toggle like')
               }
             }}

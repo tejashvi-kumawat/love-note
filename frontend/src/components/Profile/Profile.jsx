@@ -105,7 +105,7 @@ const Profile = () => {
         })
       }
     } catch (error) {
-      console.error('Failed to fetch profile:', error)
+      // Error handled silently('Failed to fetch profile:', error)
     } finally {
       setLoading(false)
     }

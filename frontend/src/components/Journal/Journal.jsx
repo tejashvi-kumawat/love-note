@@ -74,7 +74,7 @@ const Journal = () => {
       const response = await axios.get('/api/journal/')
       setEntries(response.data)
     } catch (error) {
-      console.error('Failed to fetch journal entries:', error)
+      // Error handled silently('Failed to fetch journal entries:', error)
     } finally {
       setLoading(false)
     }
@@ -92,7 +92,7 @@ const Journal = () => {
         setIsEditing(false)
       }
     } catch (error) {
-      console.error('Failed to fetch entry:', error)
+      // Error handled silently('Failed to fetch entry:', error)
     }
   }
 
@@ -169,7 +169,7 @@ const Journal = () => {
       await fetchEntryForDate(selectedDate)
       setIsEditing(false)
     } catch (error) {
-      console.error('Failed to save entry:', error)
+      // Error handled silently('Failed to save entry:', error)
       const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to save journal entry'
       alert(errorMsg)
     }
@@ -196,7 +196,7 @@ const Journal = () => {
       await fetchEntries()
       await fetchEntryForDate(selectedDate)
     } catch (error) {
-      console.error('Failed to approve edit:', error)
+      // Error handled silently('Failed to approve edit:', error)
       alert(error.response?.data?.error || 'Failed to approve edit')
     }
   }
@@ -230,7 +230,7 @@ const Journal = () => {
       setExpandedEntry(null)
       setIsEditing(false)
     } catch (error) {
-      console.error('Failed to delete entry:', error)
+      // Error handled silently('Failed to delete entry:', error)
       alert(error.response?.data?.error || 'Failed to delete entry')
     }
   }

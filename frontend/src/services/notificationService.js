@@ -127,7 +127,6 @@ class NotificationService {
 
       return true
     } catch (error) {
-      console.error('Error sending notification:', error)
       return false
     }
   }
@@ -307,7 +306,6 @@ class NotificationService {
         })
         
         if (!response.ok) {
-          console.log('VAPID key not available, skipping push subscription', response.status)
           return null
         }
         
@@ -342,12 +340,11 @@ class NotificationService {
       })
 
       if (!subscribeResponse.ok) {
-        console.error('Failed to save push subscription:', subscribeResponse.status)
+        return null
       }
 
       return subscription
     } catch (error) {
-      console.error('Error subscribing to push:', error)
       return null
     }
   }
