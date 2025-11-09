@@ -235,20 +235,15 @@ class NoteDetailView(generics.RetrieveUpdateDestroyAPIView):
             note.deletion_requested_by = user
             note.save()
             # Send notification to partner about deletion request
-            # Check if users are partners (bidirectional check)
-            are_partners = (
-                (user.partner and user.partner == note.author) or
-                (note.author.partner and note.author.partner == user)
-            )
-            if are_partners:
-                # Send notification to note author (the one who will approve/reject)
+            # Notification should go to user.partner (the partner of the person requesting deletion)
+            if user.partner:
                 send_notification_to_partner(
                     user,  # Trigger user
                     'note_deletion_requested',
                     f'🗑️ {user.username} wants to delete a note',
                     f'"{note.title}"',
-                    note_id=note.id,
-                    recipient_user=note.author  # Send to note author
+                    note_id=note.id
+                    # No recipient_user - will send to user.partner by default
                 )
             return Response({
                 'message': 'Deletion request sent. Waiting for partner approval.',
@@ -444,21 +439,16 @@ class JournalEntryDetailView(generics.RetrieveUpdateDestroyAPIView):
             entry.deletion_requested_by = user
             entry.save()
             # Send notification to partner about deletion request
+            # Notification should go to user.partner (the partner of the person requesting deletion)
             date_str = entry.date.strftime('%Y-%m-%d')
-            # Check if users are partners (bidirectional check)
-            are_partners = (
-                (user.partner and user.partner == entry.author) or
-                (entry.author.partner and entry.author.partner == user)
-            )
-            if are_partners:
-                # Send notification to journal entry author
+            if user.partner:
                 send_notification_to_partner(
                     user,  # Trigger user
                     'journal_deletion_requested',
                     f'🗑️ {user.username} wants to delete a journal entry',
                     f'Entry for {date_str}',
-                    journal_date=date_str,
-                    recipient_user=entry.author  # Send to entry author
+                    journal_date=date_str
+                    # No recipient_user - will send to user.partner by default
                 )
             return Response({
                 'message': 'Deletion request sent. Waiting for partner approval.',

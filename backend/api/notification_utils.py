@@ -172,11 +172,13 @@ def send_notification_to_partner(user, notification_type, title, body, note_id=N
         note_id: Optional note ID
         journal_date: Optional journal date
         recipient_user: Optional - if provided, send to this user instead of user.partner
+                       Used for like notifications where we want to notify note author
     """
     # If recipient_user is provided, use it; otherwise use user.partner
     target_user = recipient_user if recipient_user else user.partner
     
     if not target_user:
+        logger.warning(f'No target user found for notification "{title}" from {user.username}')
         return
     
     try:
