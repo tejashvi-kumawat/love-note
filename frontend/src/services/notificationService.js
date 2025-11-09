@@ -60,21 +60,32 @@ class NotificationService {
    * @param {object} options - Notification options (body, icon, badge, tag, etc.)
    */
   async sendNotification(title, options = {}) {
+    console.log('sendNotification called:', title, options)
+    
     // Check if notifications are enabled in user preferences (check both key formats)
     const notificationsEnabled = localStorage.getItem('notificationsEnabled') === 'true' || 
                                   localStorage.getItem('notifications_enabled') === 'true'
     
+    console.log('Notifications enabled check:', {
+      notificationsEnabled,
+      'notificationsEnabled': localStorage.getItem('notificationsEnabled'),
+      'notifications_enabled': localStorage.getItem('notifications_enabled')
+    })
+    
     if (!notificationsEnabled) {
-      console.log('Notifications disabled in preferences')
+      console.log('Notifications disabled in preferences - skipping')
       return false
     }
 
     // Check permission - update it first
     this.checkPermission()
+    console.log('Current permission:', this.permission, 'Notification.permission:', Notification.permission)
     
-    if (this.permission !== 'granted') {
-      console.log('Permission not granted, requesting...', this.permission)
+    // Use Notification.permission directly as it's the source of truth
+    if (Notification.permission !== 'granted') {
+      console.log('Permission not granted, requesting...', Notification.permission)
       const permission = await this.requestPermission()
+      console.log('Permission after request:', permission)
       if (permission !== 'granted') {
         console.log('Permission denied:', permission)
         return false
@@ -99,13 +110,20 @@ class NotificationService {
         return false
       }
 
-      // Use Service Worker registration if available (for PWA)
-      if ('serviceWorker' in navigator && 'showNotification' in ServiceWorkerRegistration.prototype) {
+      // Check permission one more time before sending
+      if (Notification.permission !== 'granted') {
+        console.error('Notification permission not granted:', Notification.permission)
+        return false
+      }
+
+      // Try Service Worker first (for PWA)
+      if ('serviceWorker' in navigator) {
         try {
-          const registration = await navigator.serviceWorker.ready
+          const registration = await navigator.serviceWorker.ready.catch(() => null)
           if (registration && registration.showNotification) {
+            console.log('Attempting Service Worker notification...')
             await registration.showNotification(title, defaultOptions)
-            console.log('Notification sent via Service Worker')
+            console.log('✅ Notification sent via Service Worker')
             return true
           }
         } catch (swError) {
@@ -114,28 +132,24 @@ class NotificationService {
       }
 
       // Fallback to regular Notification API (works in Safari, Chrome, etc.)
-      if (Notification.permission === 'granted') {
-        const notification = new Notification(title, defaultOptions)
-        console.log('Notification sent via Notification API')
-        
-        // Auto-close after 5 seconds
-        setTimeout(() => {
-          notification.close()
-        }, 5000)
+      console.log('Attempting Notification API...')
+      const notification = new Notification(title, defaultOptions)
+      console.log('✅ Notification sent via Notification API')
+      
+      // Auto-close after 5 seconds
+      setTimeout(() => {
+        notification.close()
+      }, 5000)
 
-        // Handle click event
-        notification.onclick = () => {
-          window.focus()
-          notification.close()
-        }
-
-        return true
-      } else {
-        console.error('Notification permission not granted:', Notification.permission)
-        return false
+      // Handle click event
+      notification.onclick = () => {
+        window.focus()
+        notification.close()
       }
+
+      return true
     } catch (error) {
-      console.error('Error sending notification:', error)
+      console.error('❌ Error sending notification:', error)
       return false
     }
   }
