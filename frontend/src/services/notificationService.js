@@ -127,15 +127,14 @@ class NotificationService {
         return false
       }
 
-      // Try Service Worker first (for PWA) - but with timeout
-      let useServiceWorker = false
+      // Try Service Worker first (for PWA and Safari) - but with timeout
       if ('serviceWorker' in navigator && 'showNotification' in ServiceWorkerRegistration.prototype) {
         try {
           console.log('Checking for Service Worker...')
-          // Use Promise.race to timeout after 1 second
+          // Use Promise.race to timeout after 2 seconds (longer for Safari)
           const swCheck = Promise.race([
             navigator.serviceWorker.ready,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('SW timeout')), 1000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('SW timeout')), 2000))
           ])
           
           const registration = await swCheck
@@ -149,6 +148,23 @@ class NotificationService {
           }
         } catch (swError) {
           console.log('Service Worker check failed or timed out, using Notification API:', swError.message || swError)
+          // For Safari, try sending message to Service Worker as fallback
+          if (this.isSafari && 'serviceWorker' in navigator) {
+            try {
+              const registration = await navigator.serviceWorker.getRegistration()
+              if (registration && registration.active) {
+                registration.active.postMessage({
+                  type: 'SHOW_NOTIFICATION',
+                  title,
+                  options: defaultOptions
+                })
+                console.log('✅ Notification sent via Service Worker message (Safari)')
+                return true
+              }
+            } catch (msgError) {
+              console.log('Service Worker message failed:', msgError)
+            }
+          }
         }
       } else {
         console.log('Service Worker not available, using Notification API directly')
