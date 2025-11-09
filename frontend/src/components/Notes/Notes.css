@@ -512,10 +512,63 @@
   .notes-container {
     grid-template-columns: 1fr;
     height: auto;
+    min-height: calc(100vh - 120px);
   }
 
   .notes-sidebar {
-    max-height: 400px;
+    max-height: none;
+    min-height: calc(100vh - 200px);
+    height: auto;
+  }
+
+  .notes-list {
+    min-height: 300px;
+    max-height: calc(100vh - 400px);
+  }
+}
+
+@media (max-width: 768px) {
+  .notes-container {
+    height: auto;
+    min-height: calc(100vh - 80px);
+    gap: 20px;
+  }
+
+  .notes-sidebar {
+    min-height: calc(100vh - 150px);
+    padding: 15px;
+    max-height: none;
+  }
+
+  .notes-list {
+    min-height: 400px;
+    max-height: calc(100vh - 350px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .note-item {
+    padding: 15px;
+    margin-bottom: 10px;
+  }
+
+  .note-meta {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .note-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .like-btn,
+  .edit-note-btn,
+  .delete-btn {
+    min-width: 32px;
+    min-height: 32px;
+    padding: 6px 8px;
+    font-size: 0.8rem;
   }
 }
 
