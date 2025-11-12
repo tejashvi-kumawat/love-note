@@ -3,8 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 
-// Register Service Worker EARLY for PWA support (before React app loads)
-// This ensures SW is ready when notification service tries to subscribe
+// Register Service Worker for PWA support
 if ('serviceWorker' in navigator) {
   // Wait for window load to ensure all resources are ready
   window.addEventListener('load', () => {
@@ -13,23 +12,47 @@ if ('serviceWorker' in navigator) {
     
     const registerServiceWorker = async () => {
       if (registrationAttempts >= MAX_REGISTRATION_ATTEMPTS) {
+        console.warn('Service Worker registration failed after max attempts')
         return
       }
       
       registrationAttempts++
       
       try {
-        const registration = await navigator.serviceWorker.register('/sw.js', {
+        // Check if service worker file exists first
+        const swUrl = '/sw.js'
+        const response = await fetch(swUrl, { method: 'HEAD' })
+        
+        if (!response.ok) {
+          console.warn('Service Worker file not found, skipping registration')
+          return
+        }
+        
+        const registration = await navigator.serviceWorker.register(swUrl, {
           scope: '/'
         })
+        
+        console.log('Service Worker registered successfully:', registration.scope)
         
         // Wait for service worker to be ready
         await navigator.serviceWorker.ready
         
         // Store registration globally for notification service
         window.serviceWorkerRegistration = registration
+        
+        // Listen for updates
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('New Service Worker available')
+              }
+            })
+          }
+        })
       } catch (error) {
-        // Silently handle errors - service worker is optional
+        console.error('Service Worker registration error:', error)
         // Retry with exponential backoff (max 3 attempts)
         if (registrationAttempts < MAX_REGISTRATION_ATTEMPTS) {
           const delay = Math.min(1000 * Math.pow(2, registrationAttempts - 1), 5000)
@@ -48,4 +71,3 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <App />
   </React.StrictMode>,
 )
-
