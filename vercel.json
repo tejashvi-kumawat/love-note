@@ -1,31 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/assets/:path*",
-      "destination": "/assets/:path*"
-    },
-    {
-      "source": "/sw.js",
-      "destination": "/sw.js"
-    },
-    {
-      "source": "/favicon.svg",
-      "destination": "/favicon.svg"
-    },
-    {
-      "source": "/manifest.json",
-      "destination": "/manifest.json"
-    },
-    {
-      "source": "/icon-:size.svg",
-      "destination": "/icon-:size.svg"
-    },
-    {
-      "source": "/apple-touch-icon.svg",
-      "destination": "/apple-touch-icon.svg"
-    },
-    {
-      "source": "/(.*)",
+      "source": "/((?!assets|_next|static|favicon|manifest|sw\\.js|.*\\.(js|css|svg|png|jpg|jpeg|gif|ico|woff|woff2|ttf|eot)).*)",
       "destination": "/index.html"
     }
   ],
