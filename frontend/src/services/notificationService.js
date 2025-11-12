@@ -307,9 +307,6 @@ class NotificationService {
         new Promise((_, reject) => setTimeout(() => reject(new Error('SW timeout')), 5000))
       ])
       
-      // Check if already subscribed
-      let subscription = await registration.pushManager.getSubscription()
-      
       // Get API base URL from config (same as axios uses)
       const API_BASE_URL = config.API_BASE_URL
       
@@ -319,6 +316,10 @@ class NotificationService {
         return null
       }
       
+      // Check if already subscribed locally
+      let subscription = await registration.pushManager.getSubscription()
+      
+      // Always ensure we have a subscription (create if doesn't exist)
       if (!subscription) {
         // Request VAPID public key from backend
         const response = await fetch(`${API_BASE_URL}/api/push/vapid-public-key/`, {
@@ -347,7 +348,10 @@ class NotificationService {
         })
       }
 
-      // Send subscription to backend
+      // ALWAYS send subscription to backend (even if it exists locally)
+      // This ensures each device/browser gets its own subscription saved
+      // The backend uses (user, endpoint) as unique_together, so different devices
+      // with different endpoints will create separate subscriptions
       const subData = {
         endpoint: subscription.endpoint,
         keys: {

@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, useContext } from 'react'
 import axios from 'axios'
 import config from '../config'
+import notificationService from '../services/notificationService'
 
 // Set axios base URL
 axios.defaults.baseURL = config.API_BASE_URL
@@ -52,6 +53,17 @@ export const AuthProvider = ({ children }) => {
       setToken(access)
       setUser(userData)
       axios.defaults.headers.common['Authorization'] = `Bearer ${access}`
+      
+      // Subscribe to push notifications after login (for each device)
+      // This ensures every device gets its own subscription
+      if (notificationService.checkPermission() === 'granted') {
+        setTimeout(() => {
+          notificationService.subscribeToPush().catch(() => {
+            // Silently fail - push subscription is optional
+          })
+        }, 1000) // Small delay to ensure service worker is ready
+      }
+      
       return { success: true }
     } catch (error) {
       return {

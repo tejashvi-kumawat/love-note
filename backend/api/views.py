@@ -553,7 +553,12 @@ def save_push_subscription(request):
             }
         )
         
-        logger.info(f'Push subscription {"created" if created else "updated"} for user {request.user.username}: {endpoint[:50]}...')
+        endpoint_type = 'Apple' if 'apple.com' in endpoint else 'Google' if 'googleapis.com' in endpoint else 'Other'
+        logger.info(f'Push subscription {"created" if created else "updated"} for user {request.user.username} ({endpoint_type}): {endpoint[:50]}...')
+        
+        # Log total subscriptions for this user
+        total_subs = PushSubscription.objects.filter(user=request.user).count()
+        logger.info(f'User {request.user.username} now has {total_subs} total push subscription(s)')
         
         return Response({
             'message': 'Subscription saved successfully',
