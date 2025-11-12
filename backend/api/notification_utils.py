@@ -149,7 +149,8 @@ def send_push_notification(subscription, title, body, data=None, notification_ty
             ttl=86400  # 24 hours TTL for push notifications
         )
         
-        logger.info(f'Push notification sent successfully to {subscription.user.username}')
+        endpoint_type = 'Apple' if 'apple.com' in subscription.endpoint else 'Google' if 'googleapis.com' in subscription.endpoint else 'Other'
+        logger.info(f'Push notification sent successfully to {endpoint_type} endpoint for {subscription.user.username}: {subscription.endpoint[:50]}...')
         return True
         
     except WebPushException as e:
