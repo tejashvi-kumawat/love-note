@@ -86,6 +86,16 @@ export const AuthProvider = ({ children }) => {
       setToken(access)
       setUser(userData)
       axios.defaults.headers.common['Authorization'] = `Bearer ${access}`
+      
+      // Subscribe to push notifications after registration (for each device)
+      if (notificationService.checkPermission() === 'granted') {
+        setTimeout(() => {
+          notificationService.subscribeToPush().catch(() => {
+            // Silently fail - push subscription is optional
+          })
+        }, 1000) // Small delay to ensure service worker is ready
+      }
+      
       return { success: true }
     } catch (error) {
       return {
