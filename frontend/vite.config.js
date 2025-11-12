@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { copyFileSync } from 'fs'
+import { copyFileSync, existsSync } from 'fs'
 import { join } from 'path'
 
 export default defineConfig({
@@ -13,9 +13,14 @@ export default defineConfig({
         const src = join(__dirname, 'public', 'sw.js')
         const dest = join(__dirname, 'dist', 'sw.js')
         try {
-          copyFileSync(src, dest)
+          if (existsSync(src)) {
+            copyFileSync(src, dest)
+            console.log('Service Worker copied to dist:', dest)
+          } else {
+            console.warn('Service Worker file not found at:', src)
+          }
         } catch (err) {
-          // File might not exist during first build
+          console.error('Error copying Service Worker:', err)
         }
       }
     }
