@@ -56,12 +56,24 @@ export const AuthProvider = ({ children }) => {
       
       // Subscribe to push notifications after login (for each device)
       // This ensures every device gets its own subscription
+      // Chrome PWA needs more time for service worker to be ready
+      const delay = notificationService.isChromePWA ? 2000 : 1000
       if (notificationService.checkPermission() === 'granted') {
         setTimeout(() => {
           notificationService.subscribeToPush().catch(() => {
             // Silently fail - push subscription is optional
           })
-        }, 1000) // Small delay to ensure service worker is ready
+        }, delay)
+      } else if (notificationService.isChromePWA) {
+        // For Chrome PWA, request permission first
+        setTimeout(async () => {
+          const permission = await notificationService.requestPermission()
+          if (permission === 'granted') {
+            notificationService.subscribeToPush().catch(() => {
+              // Silently fail - push subscription is optional
+            })
+          }
+        }, delay)
       }
       
       return { success: true }
@@ -88,12 +100,24 @@ export const AuthProvider = ({ children }) => {
       axios.defaults.headers.common['Authorization'] = `Bearer ${access}`
       
       // Subscribe to push notifications after registration (for each device)
+      // Chrome PWA needs more time for service worker to be ready
+      const delay = notificationService.isChromePWA ? 2000 : 1000
       if (notificationService.checkPermission() === 'granted') {
         setTimeout(() => {
           notificationService.subscribeToPush().catch(() => {
             // Silently fail - push subscription is optional
           })
-        }, 1000) // Small delay to ensure service worker is ready
+        }, delay)
+      } else if (notificationService.isChromePWA) {
+        // For Chrome PWA, request permission first
+        setTimeout(async () => {
+          const permission = await notificationService.requestPermission()
+          if (permission === 'granted') {
+            notificationService.subscribeToPush().catch(() => {
+              // Silently fail - push subscription is optional
+            })
+          }
+        }, delay)
       }
       
       return { success: true }
