@@ -18,7 +18,18 @@ if ('serviceWorker' in navigator) {
     registrationAttempts++
     
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js', {
+      // First verify the service worker file exists and is JavaScript
+      const swUrl = '/sw.js'
+      const response = await fetch(swUrl, { method: 'HEAD' })
+      
+      // Check if response is actually JavaScript (not HTML)
+      const contentType = response.headers.get('content-type')
+      if (contentType && !contentType.includes('javascript') && !contentType.includes('application/javascript')) {
+        // If server returns HTML (like 404 page), skip registration
+        return
+      }
+      
+      const registration = await navigator.serviceWorker.register(swUrl, {
         scope: '/'
       })
       
@@ -28,6 +39,12 @@ if ('serviceWorker' in navigator) {
       // Store registration globally for notification service
       window.serviceWorkerRegistration = registration
     } catch (error) {
+      // Check if error is MIME type related
+      if (error.message && error.message.includes('MIME type')) {
+        // Service worker file not found or wrong MIME type - skip registration
+        return
+      }
+      
       // Retry with exponential backoff (max 3 attempts)
       if (registrationAttempts < MAX_REGISTRATION_ATTEMPTS) {
         const delay = Math.min(1000 * Math.pow(2, registrationAttempts - 1), 5000)
