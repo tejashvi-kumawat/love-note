@@ -31,9 +31,16 @@ export default defineConfig({
   },
   publicDir: 'public',
   build: {
+    assetsDir: 'assets',
     rollupOptions: {
       input: {
         main: './index.html'
+      },
+      output: {
+        // Ensure proper file extensions for MIME type detection
+        assetFileNames: 'assets/[name].[ext]',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js'
       }
     }
   }
