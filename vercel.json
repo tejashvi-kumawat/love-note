@@ -1,12 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/sw.js",
-      "destination": "/sw.js"
-    },
-    {
-      "source": "/assets/:path*",
-      "destination": "/assets/:path*"
+      "source": "/(assets|_next|static|favicon|manifest|sw\\.js|.*\\.(js|css|svg|png|jpg|jpeg|gif|ico|woff|woff2|ttf|eot))",
+      "destination": "/$1"
     },
     {
       "source": "/(.*)",
@@ -47,4 +43,3 @@
     }
   ]
 }
-
