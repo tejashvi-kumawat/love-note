@@ -246,6 +246,8 @@ class NotificationService {
 
   /**
    * Schedule nightly journal reminder
+   * Note: This only works when the app is open. For background reminders,
+   * the backend cron job sends push notifications.
    */
   scheduleJournalReminder(time = '21:00') {
     this.clearJournalReminder()
@@ -273,6 +275,24 @@ class NotificationService {
     }
 
     scheduleNext()
+    
+    // Reschedule when page becomes visible again (user comes back to app)
+    if (typeof document !== 'undefined') {
+      const handleVisibilityChange = () => {
+        if (!document.hidden) {
+          // Page is visible again, reschedule reminder
+          this.scheduleJournalReminder(time)
+        }
+      }
+      
+      // Remove old listener if exists
+      if (this.visibilityHandler) {
+        document.removeEventListener('visibilitychange', this.visibilityHandler)
+      }
+      
+      this.visibilityHandler = handleVisibilityChange
+      document.addEventListener('visibilitychange', handleVisibilityChange)
+    }
   }
 
   /**
@@ -282,6 +302,12 @@ class NotificationService {
     if (this.reminderInterval) {
       clearTimeout(this.reminderInterval)
       this.reminderInterval = null
+    }
+    
+    // Remove visibility change listener
+    if (typeof document !== 'undefined' && this.visibilityHandler) {
+      document.removeEventListener('visibilitychange', this.visibilityHandler)
+      this.visibilityHandler = null
     }
   }
 
