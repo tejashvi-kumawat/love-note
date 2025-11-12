@@ -160,7 +160,8 @@ def send_push_notification(subscription, title, body, data=None, notification_ty
             subscription.delete()
         return False
     except Exception as e:
-        logger.error(f'Error sending push notification: {e}', exc_info=True)
+        endpoint_type = 'Apple' if 'apple.com' in subscription.endpoint else 'Google' if 'googleapis.com' in subscription.endpoint else 'Other'
+        logger.error(f'Error sending push notification to {endpoint_type} endpoint ({subscription.endpoint[:50]}...): {e}', exc_info=True)
         return False
 
 
@@ -214,8 +215,13 @@ def send_notification_to_partner(user, notification_type, title, body, note_id=N
         # Get target user's push subscriptions
         subscriptions = PushSubscription.objects.filter(user=target_user)
         
-        # Log for debugging
+        # Log for debugging - show all subscriptions
         logger.info(f'Sending notification "{title}" to {target_user.username} (triggered by {user.username}), found {subscriptions.count()} subscriptions')
+        
+        # Log each subscription endpoint for debugging
+        for idx, sub in enumerate(subscriptions, 1):
+            endpoint_type = 'Apple' if 'apple.com' in sub.endpoint else 'Google' if 'googleapis.com' in sub.endpoint else 'Other'
+            logger.info(f'  Subscription {idx}: {endpoint_type} - {sub.endpoint[:60]}...')
         
         # Send push notification to all subscriptions if they exist
         if subscriptions.exists():
@@ -226,11 +232,19 @@ def send_notification_to_partner(user, notification_type, title, body, note_id=N
                 data['journal_date'] = journal_date
             
             sent_count = 0
-            for subscription in subscriptions:
+            failed_count = 0
+            for idx, subscription in enumerate(subscriptions, 1):
+                endpoint_type = 'Apple' if 'apple.com' in subscription.endpoint else 'Google' if 'googleapis.com' in subscription.endpoint else 'Other'
+                logger.info(f'  Attempting to send to subscription {idx} ({endpoint_type})...')
+                
                 if send_push_notification(subscription, title, body, data, notification_type=notification_type):
                     sent_count += 1
+                    logger.info(f'  ✅ Successfully sent to subscription {idx} ({endpoint_type})')
+                else:
+                    failed_count += 1
+                    logger.warning(f'  ❌ Failed to send to subscription {idx} ({endpoint_type})')
             
-            logger.info(f'Notification "{title}" sent to {sent_count}/{subscriptions.count()} subscriptions for {target_user.username}')
+            logger.info(f'Notification "{title}" sent to {sent_count}/{subscriptions.count()} subscriptions for {target_user.username} (failed: {failed_count})')
         else:
             logger.warning(f'No push subscriptions found for {target_user.username}. Notification "{title}" not sent.')
         

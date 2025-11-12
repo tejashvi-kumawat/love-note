@@ -131,7 +131,12 @@ class NoteListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         note = serializer.save(author=self.request.user)
         # Send notification to partner
-        if note.is_shared and self.request.user.partner:
+        # Note: All notes are shared by default now, so we always send notification if partner exists
+        if self.request.user.partner:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f'Note created by {self.request.user.username}, sending notification to partner {self.request.user.partner.username}')
+            
             send_notification_to_partner(
                 self.request.user,
                 'note_created',
